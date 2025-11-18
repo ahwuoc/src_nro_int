@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="maven-antrun-" default="main">
+  <target name="main">
+    <copy file="/home/ahwuocdz/KhanhDTK_A2/Server/target/TeaMobi-1.0-RELEASE-jar-with-dependencies.jar" tofile="/home/ahwuocdz/KhanhDTK_A2/Server/Server.jar" overwrite="true" />
+    <echo message="✅ Server.jar copied to /home/ahwuocdz/KhanhDTK_A2/Server/Server.jar" />
+  </target>
+</project>
