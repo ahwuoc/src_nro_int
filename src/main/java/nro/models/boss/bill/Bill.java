@@ -13,7 +13,7 @@ import nro.services.Service;
 import nro.utils.Util;
 
 /**
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  * 
  */
 public class Bill extends Boss {

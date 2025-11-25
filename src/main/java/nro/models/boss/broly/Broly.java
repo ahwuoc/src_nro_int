@@ -22,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 import nro.models.player.Pet;
 import nro.services.PetService;
 import nro.services.PlayerService;
-import nro.utils.Log;
 import org.apache.commons.lang3.time.StopWatch;
 
 public class Broly extends Boss {
@@ -43,7 +42,7 @@ public class Broly extends Boss {
 
     @Override
     public void initTalk() {
-        this.textTalkAfter = new String[]{"Các ngươi chờ đấy, ta sẽ quay lại sau"};
+        this.textTalkAfter = new String[] { "Các ngươi chờ đấy, ta sẽ quay lại sau" };
     }
 
     @Override
@@ -61,7 +60,8 @@ public class Broly extends Boss {
             if (Util.getDistance(this, pl) <= Skill.RANGE_ATTACK_CHIEU_DAM) {
                 this.playerSkill.skillSelect = this.getSkillAttack();
                 if (Util.isTrue(15, ConstRatio.PER100)) {
-                    int x = Util.isTrue(70, 100) ? pl.location.x + Util.nextInt(30, 40) * dir : pl.location.x + Util.nextInt(60, 70) * dir;
+                    int x = Util.isTrue(70, 100) ? pl.location.x + Util.nextInt(30, 40) * dir
+                            : pl.location.x + Util.nextInt(60, 70) * dir;
                     goToXY(x, Util.nextInt(6) % 2 == 0 ? pl.location.y : pl.location.y - Util.nextInt(20, 40), false);
                 }
                 SkillService.gI().useSkill(this, pl, null, null);
@@ -69,7 +69,8 @@ public class Broly extends Boss {
             } else if (Util.getDistance(this, pl) <= Skill.RANGE_ATTACK_CHIEU_CHUONG) {
                 this.playerSkill.skillSelect = SkillUtil.getRangeSkill(this.playerSkill.skills);
                 if (Util.isTrue(10, ConstRatio.PER100)) {
-                    int x = Util.isTrue(70, 100) ? pl.location.x + Util.nextInt(60, 70) * dir : pl.location.x + Util.nextInt(30, 40) * -dir;
+                    int x = Util.isTrue(70, 100) ? pl.location.x + Util.nextInt(60, 70) * dir
+                            : pl.location.x + Util.nextInt(30, 40) * -dir;
                     goToXY(x, Util.nextInt(5) % 2 == 0 ? pl.location.y : pl.location.y - Util.nextInt(30, 40), false);
                 }
                 SkillService.gI().useSkill(this, pl, null, null);
@@ -146,7 +147,7 @@ public class Broly extends Boss {
             EffectSkillService.gI().sendEffectEndCharge(this);
             this.changeToAttack();
         } catch (InterruptedException e) {
-        
+
         }
     }
 
@@ -191,8 +192,9 @@ public class Broly extends Boss {
     private int countResetPoint;
 
     private void resetPoint() {
-        if (this.countResetPoint++ >= maxCountResetPoint && this.nPoint.hpMax < MAX_HP && this.nPoint.getCurrPercentHP() < 80) {
-         //   System.out.println("a");
+        if (this.countResetPoint++ >= maxCountResetPoint && this.nPoint.hpMax < MAX_HP
+                && this.nPoint.getCurrPercentHP() < 80) {
+            // System.out.println("a");
             double min = Util.nextDouble(this.nPoint.hpMax * 0.14, this.nPoint.hpMax * 0.7);
             double max = Util.nextDouble(this.nPoint.hpMax * 0.2, this.nPoint.hpMax * 0.3);
             this.nPoint.hpMax += this.nPoint.getCurrPercentHP() < 50 ? max : min;
@@ -207,6 +209,7 @@ public class Broly extends Boss {
             countResetPoint = 0;
         }
     }
+
     int countChangePlayer;
 
     @Override
@@ -218,7 +221,7 @@ public class Broly extends Boss {
                 return null;
             }
             if (pl.isDie() || pl.zone != this.zone) {
-             //   System.out.println("Remove2: " + pl.name);
+                // System.out.println("Remove2: " + pl.name);
                 playersAttack.remove(pl);
                 return null;
             }
@@ -227,7 +230,7 @@ public class Broly extends Boss {
             try {
                 super.getPlayerAttack();
             } catch (Exception e) {
-               
+
             }
         }
         return plAttack;

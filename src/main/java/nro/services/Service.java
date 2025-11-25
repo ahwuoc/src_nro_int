@@ -301,9 +301,6 @@ public class Service {
         if (player == null || player.zone == null) {
             return; // Tránh lỗi NullPointerException
         }
-
-        msg.transformData();
-
         if (player.zone.map.isMapOffline) {
             if (player.isPet) {
                 ((Pet) player).master.sendMessage(msg);
@@ -402,19 +399,6 @@ public class Service {
         }
     }
 
-    // public void SendImgSkill9(Player player) {
-    // Message msg;
-    // try {
-    // msg = new Message(62);
-    // msg.writer().writeShort(24);
-    // msg.writer().writeByte(1);
-    // msg.writer().writeByte(3);
-    // player.sendMessage(msg);
-    // msg.cleanup();
-    //
-    // } catch (Exception e) {
-    // }
-    // }
     public void SendImgSkill9(short SkillId, int IdAnhSKill) {
         Message msg = new Message(62);
         DataOutputStream ds = msg.writer();
@@ -429,20 +413,6 @@ public class Service {
         }
     }
 
-    // public void SendImgSkill9_TD(short SkillId) {
-    // Message msg = new Message(62);
-    // DataOutputStream ds = msg.writer();
-    // try {
-    // ds.writeShort(SkillId);
-    // ds.writeByte(1);
-    // ds.writeByte(3);
-    // System.out.println("OK");
-    // ds.flush();
-    // Service.getInstance().sendMessAllPlayer(msg);
-    // msg.cleanup();
-    // } catch (Exception e) {
-    // }
-    // }
     public void regisAccount(Session session, Message _msg) {
         try {
             _msg.reader().readUTF();
@@ -778,7 +748,7 @@ public class Service {
             //// MENU ADMIN
             if (text.equals("admin")) {
                 NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_ADMIN, 17997,
-                        "|7|-----YTB KhanhDTK-----\n"
+                        "|7|-----ahwuocdz-----\n"
                                 + "|1|Số người chơi đang online: " + Client.gI().getPlayers().size() + "\n"
                                 + "|8|Current thread server: " + Thread.activeCount() + "\n"
                                 + "|6|Time start server: " + ServerManager.timeStart,
@@ -787,7 +757,7 @@ public class Service {
             }
             if (text.equals("quanct")) {
                 NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_BUFF_DO, 17997,
-                        "|7|-----YTB KhanhDTK-----\n"
+                        "|7|-----ahwuocdz-----\n"
                                 + "|1|Số người chơi đang online: " + Client.gI().getPlayers().size(),
                         "Set\nThần Linh", "Tặng Ngọc", "Tặng SKH", "Đóng");
                 return;

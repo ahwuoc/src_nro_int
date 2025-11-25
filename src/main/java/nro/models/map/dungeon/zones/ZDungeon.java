@@ -23,7 +23,7 @@ import lombok.Getter;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 @Getter
 public abstract class ZDungeon extends Zone {

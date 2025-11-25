@@ -26,7 +26,7 @@ import lombok.Getter;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 @Getter
 public class SantaCity extends Map {

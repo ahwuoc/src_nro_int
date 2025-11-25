@@ -11,7 +11,7 @@ import nro.models.player.Player;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class Nadic extends CBoss {
 

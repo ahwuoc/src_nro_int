@@ -7,7 +7,7 @@ package nro.resources;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class RNormal extends AbsResources {
 

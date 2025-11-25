@@ -2,7 +2,7 @@ package nro.consts;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  * 
  *
  */

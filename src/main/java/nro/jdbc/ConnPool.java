@@ -9,7 +9,7 @@ import java.util.Vector;
 /**
  *
  * @author ❤Girlkun75❤
- * @copyright ❤YTB KhanhDTK❤
+ * @copyright ❤ahwuocdz❤
  */
 public class ConnPool {
 

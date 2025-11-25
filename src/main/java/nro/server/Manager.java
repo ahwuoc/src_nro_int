@@ -65,7 +65,7 @@ import nro.consts.ConstNpc;
 import nro.models.boss.mapoffline.NPC_ToSuKaio;
 
 /**
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  *
  */
 public class Manager {

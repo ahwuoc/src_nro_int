@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class AttributeTemplateManager {
 

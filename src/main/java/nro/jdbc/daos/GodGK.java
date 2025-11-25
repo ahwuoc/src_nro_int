@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * @author ❤Girlkun75❤
- * @copyright ❤YTB KhanhDTK❤
+ * @copyright ❤ahwuocdz❤
  */
 public class GodGK {
 

@@ -5,6 +5,7 @@ import nro.consts.*;
 import nro.dialog.ConfirmDialog;
 import nro.dialog.MenuDialog;
 import nro.jdbc.daos.PlayerDAO;
+import nro.login.LoginSession;
 import nro.lib.RandomCollection;
 import nro.models.boss.Boss;
 import nro.models.boss.BossFactory;
@@ -16,6 +17,7 @@ import nro.models.clan.ClanMember;
 import nro.models.kigui.KiGuiShop;
 import nro.models.item.Item;
 import nro.models.item.ItemOption;
+import nro.models.item.ItemOptionTemplate;
 import nro.models.item.ItemTemplate;
 import nro.models.map.ItemMap;
 import nro.models.map.Map;
@@ -39,6 +41,8 @@ import nro.server.ServerManager;
 import nro.server.io.Message;
 import nro.services.*;
 import nro.services.func.*;
+import nro.services.mocnap.MocnapMenuService;
+import nro.services.mocnap.MocnapService;
 import nro.services.func.DoiQua.DoiVND;
 import nro.utils.Log;
 import nro.utils.SkillUtil;
@@ -79,7 +83,7 @@ import static nro.server.Manager.*;
 import static nro.services.func.SummonDragon.*;
 
 /**
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  *
  */
 public class NpcFactory {
@@ -137,7 +141,7 @@ public class NpcFactory {
                             if (canOpenNpc(player)) {
                                 createOtherMenu(player, ConstNpc.BASE_MENU,
                                         "Xin chào ta có thể giúp gì cho cậu ?",
-                                        "Shop", "Hành Tinh\n Bóng Tối", "Đóng");
+                                        "Shop", "Hành Tinh\n Bóng Tối", "Mốc nạp", "Đóng");
                             }
                         }
 
@@ -156,7 +160,11 @@ public class NpcFactory {
                                                     Service.gI().sendThongBaoOK(player, "Yêu Cầu Làm qua NV Nappa");
                                                 }
                                             }
-
+                                            case 2 -> {
+                                                if (canOpenNpc(player)) {
+                                                    MocnapMenuService.gI().showMainMenu(player);
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -543,7 +551,7 @@ public class NpcFactory {
                                 if (!TaskService.gI().checkDoneTaskTalkNpc(player, this)) {
                                     this.createOtherMenu(player, ConstNpc.BASE_MENU,
                                             "|7|Người thành công là người làm những điều người khác không muốn làm.\n Áp Lực Tạo Lên Kim Cương.\n"
-                                                    + "|7|-----YTB KhanhDTK-----",
+                                                    + "|7|-----ahwuocdz-----",
                                             "Nói\nchuyện", "Tặng\nCapsule bang", "Đổi tên");
                                 }
                             }
@@ -560,7 +568,7 @@ public class NpcFactory {
                                                 if (player.clan.isLeader(player)) {
                                                     this.createOtherMenu(player, ConstNpc.MENU_NOI_CHUYEN,
                                                             "|7|Đừng sợ bắt đầu lại. Đôi khi, đó là cơ hội để xây lại tốt hơn.\n"
-                                                                    + "|7|-----YTB KhanhDTK-----",
+                                                                    + "|7|-----ahwuocdz-----",
                                                             "Nhiệm vụ\n", "Về khu\nvực bang\n",
                                                             "Giải tán\nBang hội",
                                                             "Kho báu\ndưới biển");
@@ -574,20 +582,20 @@ public class NpcFactory {
                                             } else {
                                                 this.createOtherMenu(player, ConstNpc.MENU_NOI_CHUYEN,
                                                         "|7|Đừng sợ bắt đầu lại. Đôi khi, đó là cơ hội để xây lại tốt hơn.\n"
-                                                                + "|7|-----YTB KhanhDTK-----",
+                                                                + "|7|-----ahwuocdz-----",
                                                         "Nhiệm vụ\n", "Kho báu\ndưới biển");
                                             }
                                             break;
                                         case 1:
                                             this.createOtherMenu(player, ConstNpc.MENU_TANG_CAPSULE,
                                                     "|7|Đừng sợ bắt đầu lại. Đôi khi, đó là cơ hội để xây lại tốt hơn.\n"
-                                                            + "|7|-----YTB KhanhDTK-----",
+                                                            + "|7|-----ahwuocdz-----",
                                                     "Đóng góp capsule", "Đóng");
                                             break;
 
                                         case 2:
                                             Service.gI().sendThongBaoOK(player,
-                                                    "Liên Hệ KhanhDTK để đổi Tên giá chỉ bằng ly coffe");
+                                                    "Liên Hệ ahwuocdz để đổi Tên giá chỉ bằng ly coffe");
                                             break;
 
                                     }
@@ -901,7 +909,7 @@ public class NpcFactory {
                                 if (!TaskService.gI().checkDoneTaskTalkNpc(player, this)) {
                                     this.createOtherMenu(player, ConstNpc.BASE_MENU,
                                             "|7|Thành công là một hành trình, không phải là đích đến.\n"
-                                                    + "|7|-----YTB KhanhDTK-----",
+                                                    + "|7|-----ahwuocdz-----",
                                             "Mã Quà Tặng", "Nhận Ngọc Xanh\n(Miễn phí)",
                                             "Hỗ trợ\nnhiệm vụ", "Từ chối");
                                 }
@@ -941,7 +949,7 @@ public class NpcFactory {
                                 if (!TaskService.gI().checkDoneTaskTalkNpc(player, this)) {
                                     this.createOtherMenu(player, ConstNpc.BASE_MENU,
                                             "|7|Thành công là một hành trình, không phải là đích đến.\n"
-                                                    + "|7|-----YTB KhanhDTK-----\n"
+                                                    + "|7|-----ahwuocdz-----\n"
                                                     + "|5|Số Dư Hiện Tại Của Bạn là: " + player.soDuVND + " VNĐ",
                                             "Đổi\n Thỏi Vàng", "Đổi \n Hồng Ngọc",
                                             "Mua Đệ Tử", "Từ chối");
@@ -961,7 +969,7 @@ public class NpcFactory {
                                         case 2 -> {
                                             this.createOtherMenu(player, 2,
                                                     "|7|Đừng sợ bắt đầu lại. Đôi khi, đó là cơ hội để xây lại tốt hơn.\n"
-                                                            + "|7|-----YTB KhanhDTK-----\n"
+                                                            + "|7|-----ahwuocdz-----\n"
                                                             + "|5|Số Dư Hiện Tại Của Bạn là: " + player.soDuVND
                                                             + " VNĐ",
                                                     "Đổi Đệ\n100K", "Đổi Đệ\n200k");
@@ -1912,7 +1920,7 @@ public class NpcFactory {
                                 if (this.mapId == 5) {
                                     this.createOtherMenu(player, ConstNpc.BASE_MENU,
                                             "|7|Đừng chạy theo thành công, hãy trở nên xuất sắc và thành công sẽ tìm đến bạn.\n"
-                                                    + "|7|-----YTB KhanhDTK-----",
+                                                    + "|7|-----ahwuocdz-----",
                                             "Chức năng\nPha lê", "Nâng Cấp\n Set Đồ",
                                             "Trang Bị\n Thiên Sứ");
                                 } else if (this.mapId == 112) {
@@ -6266,7 +6274,7 @@ public class NpcFactory {
                         switch (select) {
                             case 0:
                                 NpcService.gI().createMenuConMeo(player, ConstNpc.HOP_QUA_THAN_LINH, 9840,
-                                        "-----YTB KhanhDTK-----",
+                                        "-----ahwuocdz-----",
                                         "Trái đất", "Namek", "Xayda");
                                 break;
                             case 1:
@@ -6334,6 +6342,9 @@ public class NpcFactory {
                                     break;
                             }
                         }
+                        break;
+                    case ConstNpc.MENU_MOCNAP:
+                        MocnapMenuService.gI().handleMenuConfirm(player, player.iDMark.getTempId(), select);
                         break;
                 }
             }

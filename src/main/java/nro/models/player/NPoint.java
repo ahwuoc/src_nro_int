@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  * 
  */
 public class NPoint {

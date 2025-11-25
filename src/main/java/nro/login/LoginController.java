@@ -26,7 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class LoginController {
 
@@ -52,6 +52,12 @@ public class LoginController {
                 break;
             case Cmd.LOAD_DATA_PLAYER:
                 handlePlayerData(m);
+                break;
+            case Cmd.MOCNAP:
+                handleMocnapData(m);
+                break;
+            case Cmd.MOCNAP_CLAIMED:
+                handleMocnapClaimedResponse(m);
                 break;
             default:
                 System.out.println("cmd: " + m.command);
@@ -185,7 +191,7 @@ public class LoginController {
     }
 
     public void onConnectOK() {
-        System.out.println("----------YTB KhanhDTK----------");
+        System.out.println("----------ahwuocdz----------");
         session.getService().setServer(Manager.SERVER, Client.gI());
     }
 
@@ -193,7 +199,7 @@ public class LoginController {
         System.out.println("Mat ket noi may chu login");
         Util.setTimeout(() -> {
             session.reconnect();
-        }, 10000, "----------YTB KhanhDTK----------");
+        }, 10000, "----------ahwuocdz----------");
     }
     
     /**
@@ -209,6 +215,38 @@ public class LoginController {
             System.err.println("[Rust] Error reading player data response");
             e.printStackTrace();
             session.getService().onPlayerDataBinaryReceived(null);
+        }
+    }
+    
+    /**
+     * Handle mocnap rewards response from Rust server (binary format)
+     */
+    public void handleMocnapData(Message ms) {
+        try {
+            // Read entire message as binary data
+            byte[] data = ms.getData();
+            System.out.println("[Rust] Received mocnap rewards data: " + data.length + " bytes");
+            session.getService().onMocnapDataReceived(data);
+        } catch (Exception e) {
+            System.err.println("[Rust] Error reading mocnap rewards response");
+            e.printStackTrace();
+            session.getService().onMocnapDataReceived(null);
+        }
+    }
+    
+    /**
+     * Handle mocnap claimed response from Rust server
+     */
+    public void handleMocnapClaimedResponse(Message ms) {
+        try {
+            byte success = ms.reader().readByte();
+            boolean result = (success == 1);
+            System.out.println("[Rust] Mocnap claim response: " + result);
+            session.getService().onMocnapClaimReceived(result);
+        } catch (Exception e) {
+            System.err.println("[Rust] Error reading mocnap claimed response");
+            e.printStackTrace();
+            session.getService().onMocnapClaimReceived(false);
         }
     }
 

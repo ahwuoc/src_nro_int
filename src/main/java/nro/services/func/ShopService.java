@@ -29,7 +29,7 @@ import nro.server.MenuController;
 import java.util.ArrayList;
 
 /**
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  * 
  */
 public class ShopService {
@@ -108,6 +108,7 @@ public class ShopService {
             case ConstNpc.SHOP_SU_KIEN_TET:
                 shop = getShop(player, ConstNpc.QUY_LAO_KAME, 1, -1);
                 break;
+
             case ConstNpc.SHOP_TORIBOT:
                 shop = getShop(player, ConstNpc.TORIBOT, 0, -1);
                 break;
@@ -433,32 +434,33 @@ public class ShopService {
                         return;
                     }
                 }
-//                if (is.options.size() != 0 && is.options.get(0).optionTemplate.id == 247) {
-//                    is.options.clear();
-//                    is.options.add(new ItemOption(50, Util.nextInt(10, 25)));
-//                    is.options.add(new ItemOption(77, Util.nextInt(10, 25)));
-//                    is.options.add(new ItemOption(103, Util.nextInt(10, 25)));
-//                    is.options.add(new ItemOption(30, 1));
-//
-//                } else if (is.options.size() != 0 && is.options.get(0).optionTemplate.id == 249) {
-//                    is.options.clear();
-//                    double tile = Math.random();
-//                    if (tile < 0.2) {
-//                        is.options.add(new ItemOption(5, Util.nextInt(70, 120)));
-//                    } else {
-//                        is.options.add(new ItemOption(5, Util.nextInt(50, 69)));
-//                    }
-//                    is.options.add(new ItemOption(50, Util.nextInt(1, 10)));
-//                    is.options.add(new ItemOption(77, Util.nextInt(1, 10)));
-//                    is.options.add(new ItemOption(103, Util.nextInt(1, 10)));
-//                    is.options.add(new ItemOption(30, 1));
-//                }
+                // if (is.options.size() != 0 && is.options.get(0).optionTemplate.id == 247) {
+                // is.options.clear();
+                // is.options.add(new ItemOption(50, Util.nextInt(10, 25)));
+                // is.options.add(new ItemOption(77, Util.nextInt(10, 25)));
+                // is.options.add(new ItemOption(103, Util.nextInt(10, 25)));
+                // is.options.add(new ItemOption(30, 1));
+                //
+                // } else if (is.options.size() != 0 && is.options.get(0).optionTemplate.id ==
+                // 249) {
+                // is.options.clear();
+                // double tile = Math.random();
+                // if (tile < 0.2) {
+                // is.options.add(new ItemOption(5, Util.nextInt(70, 120)));
+                // } else {
+                // is.options.add(new ItemOption(5, Util.nextInt(50, 69)));
+                // }
+                // is.options.add(new ItemOption(50, Util.nextInt(1, 10)));
+                // is.options.add(new ItemOption(77, Util.nextInt(1, 10)));
+                // is.options.add(new ItemOption(103, Util.nextInt(1, 10)));
+                // is.options.add(new ItemOption(30, 1));
+                // }
                 switch (player.iDMark.getShopId()) {
-//                    case ConstNpc.SHOP_SANTA_1:
-//                        player.head = is.temp.part;
-//                        Service.getInstance().Send_Caitrang(player);
-//                        Service.getInstance().sendThongBao(player, "Đổi kiểu tóc thành công");
-//                        break;
+                    // case ConstNpc.SHOP_SANTA_1:
+                    // player.head = is.temp.part;
+                    // Service.getInstance().Send_Caitrang(player);
+                    // Service.getInstance().sendThongBao(player, "Đổi kiểu tóc thành công");
+                    // break;
                     case ConstNpc.SHOP_SANTA_3:
                         Service.gI().sendThongBao(player, "Bạn chưa mở khóa danh hiệu này");
                         break;
@@ -572,18 +574,18 @@ public class ShopService {
                         if (is.temp.id == 517 || is.temp.id == 518) {
                             reopenShop(player, 39, 1);
                         }
-//                        if (player.iDMark.getShopId() == ConstNpc.SHOP_TORIBOT) {
-//                            if (is.options.size() == 4) {
-//                                is.options.clear();
-//                                is.options.add(new ItemOption(247, 0));
-//                            }
-//                        }
-//                        if (player.iDMark.getShopId() == ConstNpc.SHOP_TORIBOT) {
-//                            if (is.options.size() == 5) {
-//                                is.options.clear();
-//                                is.options.add(new ItemOption(249, 0));
-//                            }
-//                        }
+                        // if (player.iDMark.getShopId() == ConstNpc.SHOP_TORIBOT) {
+                        // if (is.options.size() == 4) {
+                        // is.options.clear();
+                        // is.options.add(new ItemOption(247, 0));
+                        // }
+                        // }
+                        // if (player.iDMark.getShopId() == ConstNpc.SHOP_TORIBOT) {
+                        // if (is.options.size() == 5) {
+                        // is.options.clear();
+                        // is.options.add(new ItemOption(249, 0));
+                        // }
+                        // }
                         break;
                 }
             } else {
@@ -644,7 +646,7 @@ public class ShopService {
             for (int i = 0; i < n; i++) {
                 Item item = player.inventory.itemsBoxCrackBall.get(i);
                 msg.writer().writeShort(item.template.id);
-                msg.writer().writeUTF("\n|7|-----YTB KhanhDTK-----");
+                msg.writer().writeUTF("\n|7|-----ahwuocdz-----");
                 List<ItemOption> itemOptions = item.getDisplayOptions();
                 msg.writer().writeByte(itemOptions.size());
                 for (ItemOption io : itemOptions) {
@@ -732,7 +734,7 @@ public class ShopService {
             msg.writer().writeByte(player.getSession().itemsReward.size());
             for (Item item : player.getSession().itemsReward) {
                 msg.writer().writeShort(item.template.id);
-                msg.writer().writeUTF("|7|-----YTB KhanhDTK------");
+                msg.writer().writeUTF("|7|-----ahwuocdz------");
                 List<ItemOption> itemOptions = item.getDisplayOptions();
                 msg.writer().writeByte(itemOptions.size() + 1);
                 for (ItemOption io : itemOptions) {
@@ -740,7 +742,7 @@ public class ShopService {
                     msg.writer().writeShort(io.param);
                 }
                 // số lượng
-                
+
                 msg.writer().writeByte(31);
                 msg.writer().writeShort(item.quantity);
                 //

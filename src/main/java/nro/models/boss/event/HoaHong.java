@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class HoaHong extends Boss {
 

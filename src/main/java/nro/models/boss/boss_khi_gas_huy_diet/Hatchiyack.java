@@ -29,7 +29,7 @@ import nro.utils.Log;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class Hatchiyack extends BossKhiGasHuyDiet {
 

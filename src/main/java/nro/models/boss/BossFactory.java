@@ -42,7 +42,7 @@ import nro.services.MapService;
 import org.apache.log4j.Logger;
 
 /**
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  * @copyright 💖 NROLOVE 💖
  */
 public class BossFactory {
@@ -268,10 +268,9 @@ public class BossFactory {
                 createBoss(KINGKONG);
                 createBoss(CUMBER);
                 createBoss(SUPER_BROLY_RED);
-
-                // for (int i = 0; i < 15; i++) {
-                // createBoss(BROLY);
-                // }
+                for (int i = 0; i < 30; i++) {
+                    createBoss(BROLY);
+                }
             } catch (Exception e) {
                 logger.error("Err initboss", e);
             }

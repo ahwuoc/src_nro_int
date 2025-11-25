@@ -25,7 +25,7 @@ import nro.models.boss.Boss;
 import nro.models.boss.BossManager;
 
 /**
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  * 
  */
 public class ChangeMapService {

@@ -34,7 +34,7 @@ import nro.models.boss.mapoffline.Boss_Yanjiro;
 import nro.server.io.Message;
 
 /**
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  *
  */
 public abstract class Boss extends Player implements BossInterface {

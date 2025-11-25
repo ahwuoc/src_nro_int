@@ -26,13 +26,12 @@ import nro.utils.Util;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import nro.models.map.phoban.KhiGas;
-//import nro.models.map.KhanhDTK.TreasureMap;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 /**
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  * 
  */
 public class Clan {

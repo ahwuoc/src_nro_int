@@ -25,7 +25,7 @@ import org.json.JSONObject;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 @Getter
 @Setter

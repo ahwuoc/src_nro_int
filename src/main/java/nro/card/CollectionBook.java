@@ -12,7 +12,7 @@ import lombok.Setter;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class CollectionBook {
 

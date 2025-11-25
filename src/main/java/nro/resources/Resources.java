@@ -28,7 +28,7 @@ import nro.utils.FileIO;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class Resources {
 

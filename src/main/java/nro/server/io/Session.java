@@ -43,9 +43,9 @@ public class Session {
 
     public boolean connected;
 
-    static final byte[] KEYS = {0};
+    static final byte[] KEYS = { 0 };
     byte curR, curW;
- public int vnd;
+    public int vnd;
     private Socket socket;
     Thread sendThread;
     Thread receiveThread;
@@ -96,14 +96,14 @@ public class Session {
 
     public void update() {
         if (Util.canDoWithTime(lastTimeReadMessage, TIME_WAIT_READ_MESSAGE)) {
-//            Client.gI().kickSession(this);
+            // Client.gI().kickSession(this);
         }
     }
 
     public void initItemsReward() {
         // demo và giải thích //
 
-//        100:3|1:10,1:10;200:2|2:5;457:1|3:8
+        // 100:3|1:10,1:10;200:2|2:5;457:1|3:8
         // end //
         try {
             this.itemsReward = new ArrayList<>();
@@ -148,8 +148,6 @@ public class Session {
             this.controller = controller;
             this.sendThread = new Thread((this.sender = new MessageSender(this, socket)), "Send " + ip);
             this.receiveThread = new Thread((this.collector = new MessageCollector(this, socket)), "Receive " + ip);
-//            this.doControllerThread = new Thread((this.doController = new MessageDoController(this)), "Do controller " + ip);
-//            this.doControllerThread.start();
             this.receiveThread.start();
             Client.gI().put(this);
         } catch (Exception e) {
@@ -202,8 +200,8 @@ public class Session {
     public void setClientType(Session session, Message msg, int typeClient, byte zoomLevel, int version) {
         try {
             if (!isSetClientType) {
-                session.typeClient = typeClient;//client_type
-                session.zoomLevel = zoomLevel;//zoom_level
+                session.typeClient = typeClient;// client_type
+                session.zoomLevel = zoomLevel;// zoom_level
                 session.version = version;
                 isSetClientType = true;
                 Resources.getInstance().sendResVersion(this);
@@ -218,13 +216,13 @@ public class Session {
     public void setClientType(Message msg) {
         try {
             if (!isSetClientType) {
-                this.typeClient = (msg.reader().readByte());//client_type
-                this.zoomLevel = msg.reader().readByte();//zoom_level
-                msg.reader().readBoolean();//is_gprs
-                msg.reader().readInt();//width
-                msg.reader().readInt();//height
-                msg.reader().readBoolean();//is_qwerty
-                msg.reader().readBoolean();//is_touch
+                this.typeClient = (msg.reader().readByte());// client_type
+                this.zoomLevel = msg.reader().readByte();// zoom_level
+                msg.reader().readBoolean();// is_gprs
+                msg.reader().readInt();// width
+                msg.reader().readInt();// height
+                msg.reader().readBoolean();// is_qwerty
+                msg.reader().readBoolean();// is_touch
                 String platform = msg.reader().readUTF();
                 String[] arrPlatform = platform.split("\\|");
                 this.version = Integer.parseInt(arrPlatform[1].replaceAll("\\.", ""));
@@ -363,9 +361,9 @@ public class Session {
             TaskService.gI().sendInfoCurrentTask(player);
 
             // nhận quà đăng nhập hàng ngày
-//            if (Manager.EVENT_SEVER == 3) {
-//                RewardService.gI().rewardFirstTimeLoginPerDay(player);
-//            }
+            // if (Manager.EVENT_SEVER == 3) {
+            // RewardService.gI().rewardFirstTimeLoginPerDay(player);
+            // }
         }
     }
 }

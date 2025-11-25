@@ -14,7 +14,7 @@ import nro.services.Service;
 import nro.utils.Util;
 
 /**
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  * 
  */
 public class POCTHO extends Boss {

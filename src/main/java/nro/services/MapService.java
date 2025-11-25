@@ -23,7 +23,7 @@ import nro.models.item.Item;
 import nro.server.Client;
 
 /**
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  *
  */
 public class MapService {

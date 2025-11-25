@@ -7,7 +7,7 @@ package nro.consts;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class ConstAttribute {
 

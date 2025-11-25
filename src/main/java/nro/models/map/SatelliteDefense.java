@@ -11,7 +11,7 @@ import nro.utils.Util;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class SatelliteDefense extends Satellite {
 

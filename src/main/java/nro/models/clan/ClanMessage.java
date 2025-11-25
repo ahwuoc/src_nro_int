@@ -2,7 +2,7 @@ package nro.models.clan;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  * 
  *
  */

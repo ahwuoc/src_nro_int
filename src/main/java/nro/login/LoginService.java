@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class LoginService {
 
@@ -179,5 +179,97 @@ public class LoginService {
     public void onPlayerDataBinaryReceived(byte[] data) {
         this.playerDataBinary = data;
         this.loadBinaryComplete = true;
+    }
+    
+    // ==================== MOCNAP REWARDS ====================
+    
+    private volatile byte[] mocnapData = null;
+    private volatile boolean mocnapLoadComplete = false;
+    
+    /**
+     * Request mocnap rewards config from Rust server (blocking with timeout)
+     */
+    public byte[] loadMocnapRewards(int timeoutMs) {
+        try {
+            mocnapData = null;
+            mocnapLoadComplete = false;
+            
+            // Send request (no data needed)
+            Message ms = new Message(Cmd.MOCNAP);
+            sendMessage(ms);
+            ms.cleanup();
+            
+            // Wait for response with timeout
+            long start = System.currentTimeMillis();
+            while (!mocnapLoadComplete) {
+                if (System.currentTimeMillis() - start > timeoutMs) {
+                    System.err.println("[Rust] Timeout loading mocnap rewards");
+                    return null;
+                }
+                Thread.sleep(5); // 5ms check interval
+            }
+            
+            return mocnapData;
+            
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * Callback when mocnap data response received (called by LoginController)
+     */
+    public void onMocnapDataReceived(byte[] data) {
+        this.mocnapData = data;
+        this.mocnapLoadComplete = true;
+    }
+    
+    // ==================== MOCNAP CLAIMED ====================
+    
+    private volatile boolean mocnapClaimResult = false;
+    private volatile boolean mocnapClaimComplete = false;
+    
+    /**
+     * Mark milestone as claimed on Rust server (blocking with timeout)
+     */
+    public boolean markMilestoneClaimed(int playerId, int milestoneId, int timeoutMs) {
+        try {
+            mocnapClaimResult = false;
+            mocnapClaimComplete = false;
+            
+            // Send request
+            Message ms = new Message(Cmd.MOCNAP_CLAIMED);
+            DataOutputStream ds = ms.writer();
+            ds.writeInt(playerId);
+            ds.writeInt(milestoneId);
+            ds.flush();
+            sendMessage(ms);
+            ms.cleanup();
+            
+            // Wait for response with timeout
+            long start = System.currentTimeMillis();
+            while (!mocnapClaimComplete) {
+                if (System.currentTimeMillis() - start > timeoutMs) {
+                    System.err.println("[Rust] Timeout marking milestone claimed for player " + playerId);
+                    return false;
+                }
+                Thread.sleep(5);
+            }
+            
+            return mocnapClaimResult;
+            
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Callback when mocnap claimed response received (called by LoginController)
+     */
+    public void onMocnapClaimReceived(boolean success) {
+        this.mocnapClaimResult = success;
+        this.mocnapClaimComplete = true;
     }
 }

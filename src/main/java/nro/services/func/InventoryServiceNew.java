@@ -2,7 +2,7 @@ package nro.services.func;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  * 
  *
  */

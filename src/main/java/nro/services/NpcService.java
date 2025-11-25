@@ -10,7 +10,7 @@ import nro.utils.Log;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  * 
  *
  */
@@ -44,6 +44,7 @@ public class NpcService {
         Message msg;
         try {
             player.iDMark.setIndexMenu(indexMenu);
+            player.iDMark.setTempId(avatar); // Lưu tempId (avatar) vào iDMark
             msg = new Message(32);
             msg.writer().writeShort(npcTempId);
             msg.writer().writeUTF(npcSay);

@@ -15,7 +15,7 @@ import nro.services.func.ChangeMapService;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class Cadich extends CBoss {
 

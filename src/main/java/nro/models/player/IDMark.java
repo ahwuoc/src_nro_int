@@ -7,7 +7,7 @@ import nro.models.npc.Npc;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  *
  *
  */
@@ -15,6 +15,7 @@ public class IDMark {
 
     private int typeChangeMap; // capsule, ngọc rồng đen...
     private int indexMenu; // menu npc
+    private int tempId; // temp id for menu (e.g., milestone id)
     private int typeInput; // input
     private int shopId; // shop ope
     private byte typeLuckyRound; // type lucky round
@@ -75,5 +76,13 @@ public class IDMark {
 
     public void setNpcChose(Npc npc) {
         this.npcChose = npc;
+    }
+    
+    public int getTempId() {
+        return this.tempId;
+    }
+    
+    public void setTempId(int tempId) {
+        this.tempId = tempId;
     }
 }

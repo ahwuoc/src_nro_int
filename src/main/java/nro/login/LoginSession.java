@@ -15,7 +15,7 @@ import lombok.Getter;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class LoginSession {
 

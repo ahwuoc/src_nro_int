@@ -27,7 +27,7 @@ import nro.utils.Log;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class TrungUyXanhLo extends BossBanDoKhoBau {
 

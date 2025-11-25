@@ -1,16 +1,9 @@
 package nro.models.boss;
 
-import nro.utils.Log;
 import java.util.ArrayList;
 import java.util.List;
 import nro.models.player.Player;
 
-/**
- *
- * @author 💖 YTB KhanhDTK 💖
- * 
- *
- */
 public class BossManager {
 
     public static final List<Boss> BOSSES_IN_GAME;

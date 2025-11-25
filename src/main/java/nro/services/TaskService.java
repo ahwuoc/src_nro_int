@@ -39,7 +39,7 @@ import static nro.models.item.ItemTime.TEXT_NHIEM_VU_HANG_NGAY;
 import nro.models.npc.NpcFactory;
 
 /**
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  *
  */
 public class TaskService {
@@ -81,9 +81,7 @@ public class TaskService {
         try {
             msg = new Message(40);
             msg.writer().writeShort(player.playerTask.taskMain.id);
-            // msg.writer().writeShort(12);
             msg.writer().writeByte(player.playerTask.taskMain.index);
-            // msg.writer().writeUTF(player.playerTask.taskMain.name);
             msg.writer().writeUTF(player.playerTask.taskMain.name + " [" + player.playerTask.taskMain.id + "]");
             msg.writer().writeUTF(player.playerTask.taskMain.detail);
             msg.writer().writeByte(player.playerTask.taskMain.subTasks.size());

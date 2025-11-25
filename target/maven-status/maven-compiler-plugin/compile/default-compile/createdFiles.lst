@@ -123,6 +123,7 @@ nro/models/npc/NpcFactory$42.class
 nro/models/boss/VoDaiSinhTu/ThoDauBac.class
 nro/models/boss/cdrd/Cadich.class
 nro/services/func/lr/AbsLuckyRound.class
+nro/services/mocnap/MocnapService$MocnapItem.class
 nro/models/boss/mapoffline/Boss_Tau77.class
 nro/models/boss/BossData.class
 nro/consts/ConstItem.class
@@ -152,6 +153,7 @@ nro/models/kigui/KiGuiItem.class
 nro/models/PartDetail.class
 nro/models/boss/mapoffline/Boss_ThuongDe.class
 nro/models/boss/mabu_war/BossMabuWar.class
+nro/services/mocnap/MocnapService$MocnapMilestone.class
 nro/models/boss/td/Kogu.class
 nro/models/npc/Npc.class
 nro/models/npc/NpcManager.class
@@ -209,6 +211,7 @@ nro/models/map/DaiHoiVoThuat/DaiHoiVoThuatService.class
 nro/models/map/DaiHoiVoThuat/DaiHoiVoThuatService$1$2.class
 nro/dialog/MenuDialog.class
 nro/models/boss/dhvt/PonPut.class
+nro/utils/TickUtil.class
 nro/models/boss/boss_khi_gas_huy_diet/Hatchiyack.class
 nro/models/task/AchivementTemplate.class
 nro/noti/NotiManager.class
@@ -240,6 +243,7 @@ nro/models/boss/mapoffline/Boss_Whis.class
 nro/jdbc/DBService.class
 nro/models/item/HeadAvatar.class
 nro/models/item/Item.class
+nro/server/TickManager.class
 nro/models/item/ItemOptionLuckyRound.class
 nro/services/IntrinsicService.class
 nro/services/FlagBagService.class
@@ -363,6 +367,7 @@ nro/models/npc/NpcFactory$43.class
 nro/models/boss/dhvt/ThienXinHangClone.class
 nro/models/boss/VoDaiSinhTu/VuaQuySatan.class
 nro/models/map/Map.class
+nro/services/mocnap/MocnapMenuService.class
 nro/models/player/Location.class
 nro/models/boss/dhvt/Yamcha.class
 nro/models/mob/MobTemplate.class
@@ -379,6 +384,7 @@ nro/consts/MapName.class
 nro/attr/AttributeTemplate$AttributeTemplateBuilder.class
 nro/services/Service.class
 nro/models/boss/mapoffline/Boss_Yanjiro.class
+nro/services/mocnap/MocnapClaimHandler.class
 nro/models/boss/iboss/BossInterface.class
 nro/models/mob/MobMe.class
 nro/models/mob/MobPoint.class
@@ -407,6 +413,7 @@ nro/server/model/AntiLogin.class
 nro/models/boss/cell/XenCon2.class
 nro/services/RewardService$RatioStar.class
 nro/models/boss/robotsatthu/Android15.class
+nro/services/mocnap/MocnapService.class
 nro/models/skill/SkillNotFocus.class
 nro/utils/Log.class
 nro/models/boss/NgucTu/Cumber.class
@@ -486,5 +493,6 @@ nro/server/MenuController.class
 nro/models/boss/td/Brolykhoinguyen.class
 nro/models/player/MiniPet.class
 nro/models/kigui/KiGuiShop.class
+nro/services/mocnap/MocnapService$MocnapOption.class
 nro/models/boss/dhvt/LiuLiu.class
 nro/models/boss/tieudoisatthu/So4.class

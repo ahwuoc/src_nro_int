@@ -7,7 +7,7 @@ package nro.login;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  */
 public class Cmd {
 
@@ -20,4 +20,8 @@ public class Cmd {
     
     // Player data loading
     public static final byte LOAD_DATA_PLAYER = 30;
+    
+    // Mocnap rewards
+    public static final byte MOCNAP = 51;
+    public static final byte MOCNAP_CLAIMED = 52;
 }

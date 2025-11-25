@@ -2,7 +2,7 @@ package nro.consts;
 
 /**
  *
- * @author 💖 YTB KhanhDTK 💖
+ * @author 💖 ahwuocdz 💖
  * 
  *
  */
@@ -167,6 +167,9 @@ public class ConstNpc {
         public static final int ORTHER_MENU2 = 506;
         public static final int MENU_CHUYEN_HOA_SKH = 9999;
         public static final int MENU_NANG_CAP_DO_TS = 91999;
+
+        // index menu mốc nạp
+        public static final int MENU_MOCNAP = 600;
         public static final int MENU_NANG_CAP_DO_TL = 712;
         public static final int SACH_TUYET_KY = 507;
 
@@ -328,6 +331,7 @@ public class ConstNpc {
         public static final int SHOP_BA_HAT_MIT_3 = 516;
         public static final int SHOP_SU_KIEN_TET = 517;
         public static final int SHOP_TORIBOT = 518;
+        public static final int SHOP_MOCNAP = 51832323;
 
         public static final int SHOP_SANTA_3 = 519;
         public static final int MENU_QUAY_CT = 520;
