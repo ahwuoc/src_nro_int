@@ -118,23 +118,29 @@ public abstract class AbsResources {
     public void initBGSmallVersion() {
         try {
             backgroundVersion = new byte[4][];
-            for (int i = 0; i < 4; i++) {
-                File file = new File(this.folder, "/image/" + (i + 1) + "/bg/");
-                File[] files = file.listFiles();
-                int max = 0;
-                for (File f : files) {
-                    String name = f.getName();
-                    int id = Integer.parseInt(FileUtils.cutPng(name));
-                    if (id > max) {
-                        max = id;
-                    }
+            // Chỉ đọc từ x4, các zoom level khác sẽ dùng auto-scale
+            File file = new File(this.folder, "/image/4/bg/");
+            File[] files = file.listFiles();
+            if (files == null || files.length == 0) {
+                for (int i = 0; i < 4; i++) {
+                    backgroundVersion[i] = new byte[1];
                 }
+                return;
+            }
+            int max = 0;
+            for (File f : files) {
+                String name = f.getName();
+                int id = Integer.parseInt(FileUtils.cutPng(name));
+                if (id > max) {
+                    max = id;
+                }
+            }
+            for (int i = 0; i < 4; i++) {
                 backgroundVersion[i] = new byte[max + 1];
                 for (File f : files) {
                     String name = f.getName();
                     int id = Integer.parseInt(FileUtils.cutPng(name));
                     backgroundVersion[i][id] = (byte) (Files.readAllBytes(f.toPath()).length % 127);
-
                 }
             }
         } catch (IOException e) {
@@ -145,18 +151,25 @@ public abstract class AbsResources {
     public void initSmallVersion() {
         try {
             smallVersion = new byte[4][];
-            for (int i = 0; i < 4; i++) {
-                File file = new File(this.folder, "/image/" + (i + 1) + "/icon/");
-                File[] files = file.listFiles();
-                int max = 0;
-                for (File f : files) {
-                    String name = f.getName();
-                    name = FileUtils.cutPng(name);
-                    int id = Integer.parseInt(name);
-                    if (id > max) {
-                        max = id;
-                    }
+            // Chỉ đọc từ x4, các zoom level khác sẽ dùng auto-scale
+            File file = new File(this.folder, "/image/4/icon/");
+            File[] files = file.listFiles();
+            if (files == null || files.length == 0) {
+                for (int i = 0; i < 4; i++) {
+                    smallVersion[i] = new byte[1];
                 }
+                return;
+            }
+            int max = 0;
+            for (File f : files) {
+                String name = f.getName();
+                name = FileUtils.cutPng(name);
+                int id = Integer.parseInt(name);
+                if (id > max) {
+                    max = id;
+                }
+            }
+            for (int i = 0; i < 4; i++) {
                 smallVersion[i] = new byte[max + 1];
                 for (File f : files) {
                     String name = f.getName();
