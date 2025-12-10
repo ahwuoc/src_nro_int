@@ -4,9 +4,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import nro.consts.ConstAchive;
+import nro.consts.ConstItem;
 import nro.consts.ConstPlayer;
 import nro.models.item.Item;
 import nro.models.item.ItemOption;
+import nro.models.item.ItemTemplate;
 //import nro.models.map.phoban.BanDoKhoBau;
 import nro.models.map.phoban.DoanhTrai;
 import nro.models.player.Fusion;
@@ -15,6 +17,8 @@ import nro.server.io.Message;
 import nro.utils.Log;
 
 import static nro.models.item.ItemTime.*;
+import static nro.server.Manager.ITEM_TEMPLATES;
+
 import nro.models.map.phoban.BanDoKhoBau;
 import nro.models.map.phoban.KhiGas;
 import nro.utils.Util;
@@ -88,7 +92,7 @@ public class ItemTimeService {
         if (player.itemTime.isDanhNhanBan) {
             sendItemTime(player, 2295,
                     (int) ((TIME_DANH_NHAN_BAN - (System.currentTimeMillis() - player.itemTime.lasttimeDanhNhanBan))
-                    / 1000));
+                            / 1000));
         }
         if (player.itemTime.isUseCuongNo) {
             sendItemTime(player, 2754,
@@ -101,7 +105,7 @@ public class ItemTimeService {
         if (player.itemTime.isOpenPower) {
             sendItemTime(player, 3783,
                     (int) ((TIME_OPEN_POWER - (System.currentTimeMillis() - player.itemTime.lastTimeOpenPower))
-                    / 1000));
+                            / 1000));
         }
         if (player.itemTime.isUseMayDo) {
             sendItemTime(player, 2758,
@@ -137,12 +141,30 @@ public class ItemTimeService {
         }
         // BiNgo
         if (player.effectSkill.isBiNgo) {
-            sendItemTime(player, 7057, (int) ((30_000 - (System.currentTimeMillis() - player.effectSkill.lastBiNgo)) / 1000));
+            sendItemTime(player, 7057,
+                    (int) ((30_000 - (System.currentTimeMillis() - player.effectSkill.lastBiNgo)) / 1000));
         }
-        // BiNgo
+        // Lucky
+        if (player.itemTime.isUseLucky) {
+            ItemTemplate item_lucky = ITEM_TEMPLATES.get(ConstItem.LUCKY_ITEM);
+            sendItemTime(player, item_lucky.iconID, (int) (player.itemTime.luckyTimeRemaining / 1000));
+        }
+        // Buff x5 TNSM
+        if (player.itemTime.isUseBuffX5TNSM) {
+            ItemTemplate item = ITEM_TEMPLATES.get(ConstItem.BUFF_X5_TNSM);
+            sendItemTime(player, item.iconID, (int) (player.itemTime.buffX5TNSMTimeRemaining / 1000));
+        }
+        // Buff x10 TNSM
+        if (player.itemTime.isUseBuffX10TNSM) {
+            ItemTemplate item = ITEM_TEMPLATES.get(ConstItem.BUFF_X10_TNSM);
+            sendItemTime(player,  item.iconID, (int) (player.itemTime.buffX10TNSMTimeRemaining / 1000));
+        }
+        // Buff x15 TNSM
+        if (player.itemTime.isUseBuffX15TNSM) {
+            ItemTemplate item = ITEM_TEMPLATES.get(ConstItem.BUFF_X15_TNSM);
+            sendItemTime(player,  item.iconID, (int) (player.itemTime.buffX15TNSMTimeRemaining / 1000));
+        }
     }
-
-    // bật tđlt
     public void turnOnTDLT(Player player, Item item) {
         int min = 0;
         for (ItemOption io : item.itemOptions) {
@@ -247,16 +269,22 @@ public class ItemTimeService {
         }
     }
 
-    public void sendItemTime(Player player, int itemId, int time) {
+    public void sendItemTime(Player player, int icon_id, int time) {
         Message msg;
         try {
             msg = new Message(-106);
-            msg.writer().writeShort(itemId);
+            msg.writer().writeShort(icon_id);
             msg.writer().writeShort(time);
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
         }
+    }
+
+
+
+    public void sendItemTime(Player player, Item item, int time) {
+        sendItemTime(player, item.template.iconID, time);
     }
 
     public void removeItemTime(Player player, int itemTime) {

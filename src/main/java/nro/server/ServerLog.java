@@ -7,9 +7,7 @@ import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 
-/**
- * @author outcast c-cute hột me 😳
- */
+
 public class ServerLog {
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd_MM_yyyy");

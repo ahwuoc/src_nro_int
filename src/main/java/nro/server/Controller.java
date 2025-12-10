@@ -856,27 +856,7 @@ public class Controller {
         if (player.pet != null) {
             player.pet.joinMapMaster();
         }
-
-//        Boss yajiro = BossManager.gI().getBossById(Util.createIdDuongTank((int) player.id) + 300000);
-//        if (yajiro == null) {
-//            try {
-//                Boss_Yanjiro dt = new Boss_Yanjiro(Util.createIdDuongTank((int) player.id), BossData.YANJIRO, player.zone, -1, -1, player.id);
-//            } catch (Exception ex) {
-//                ex.printStackTrace();
-//            }
-//        }
-//
-//        Boss mrpopo = BossManager.gI().getBossById(Util.createIdDuongTank((int) player.id) + 200000);
-//        if (mrpopo == null) {
-//            try {
-//                Boss_MrPôPô dt = new Boss_MrPôPô(Util.createIdDuongTank((int) player.id), BossData.MR_POPO, player.zone, -1, -1, player.id);
-//            } catch (Exception ex) {
-//                ex.printStackTrace();
-//            }
-//        }
-        //last time use skill
         Service.getInstance().sendTimeSkill(player);
-
         if (TaskService.gI().getIdTask(player) == ConstTask.TASK_0_0) {
             Service.getInstance().sendThongBao(player, "Nhiệm vụ của bạn là\nHãy di chuyển nhân vật");
             String npcSay = "Chào mừng " + player.name + " đến với thế giới " + Manager.SERVER_NAME + "\n";
@@ -892,29 +872,7 @@ public class Controller {
         } else {
             NotiManager.getInstance().sendAlert(player);
             NotiManager.getInstance().sendDanhQuaiNhanNgoc(player);
-//            if (player.isAdmin()) {
-//                Service.gI().ServerMessageVip("Thông báo này chỉ là thông báo thử nghiệm của Client Version 2.3.7");
-//            }
         }
-
-//        if (player.inventory.itemsBag != null) {
-//            for (int i = 0; i < player.inventory.itemsBag.size() - 1; i++) {
-//                if (player.inventory.itemsBag.get(i).template.id == 738) {
-//                    InventoryService.gI().removeItemBag(player, i);
-//                }
-//            }
-//        }
-//        for (int i = 0; i < player.inventory.itemsBody.size() - 1; i++) {
-//            if (player.inventory.itemsBody.get(i).template.id == 738) {
-//                InventoryService.gI().removeItemBody(player, i);
-//            }
-//        }
-//
-//        for (int i = 0; i < player.inventory.itemsBox.size() - 1; i++) {
-//            if (player.inventory.itemsBox.get(i).template.id == 738) {
-//                InventoryService.gI().removeItemBox(player, i);
-//            }
-//        }
         if (player.inventory.itemsBody.get(12).isNotNullItem()) {
             new Thread(() -> {
                 try {
@@ -925,19 +883,11 @@ public class Controller {
             }).start();
         }
         player.soDuVND = player.getSession().vndBar;
-
         player.soThoiVang = player.getSession().goldBar;
-
         player.thanhVien = player.getSession().actived;
-
         NotiManager.getInstance().sendNoti(player);
-
         KiGuiShop.getInstance().sendExpirationNotification(player);
-
         Util.setTimeout(() -> PlayerService.gI().sendPetFollow(player), 500, "pet folloer");
-
         player.timeFixInventory = System.currentTimeMillis() + 500;
-
-//        Service.getInstance().sendThongBaoXamLon(player);
     }
 }

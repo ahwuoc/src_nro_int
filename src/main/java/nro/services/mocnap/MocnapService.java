@@ -1,24 +1,19 @@
 package nro.services.mocnap;
 
-import nro.login.LoginSession;
-import nro.server.ServerManager;
-
-import java.io.DataInputStream;
-import java.io.IOException;
+import nro.ahwuocdz.mocnap;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
- * 
- * 
- * @author 💖 YTB ahwuocdz 💖
+ * Service xử lý mốc nạp
+ * Parse dữ liệu từ mocnap class
  */
 public class MocnapService {
-
-    // private static MocnapService instance;
     private static MocnapService instance;
-
-    // Cache data từ Login Server
     private List<MocnapMilestone> milestones = new ArrayList<>();
     private boolean loaded = false;
 
@@ -29,107 +24,69 @@ public class MocnapService {
         return instance;
     }
 
-    public boolean loadFromLoginServer(int timeoutMs) {
+    /**
+     * Load tất cả mốc nạp từ database
+     */
+    public boolean loadFromDatabase(Connection conn) {
         try {
-            LoginSession loginSession = ServerManager.gI().getLogin();
-            if (loginSession == null || !loginSession.isConnected()) {
-                System.err.println("[MocnapService] Login server not connected");
-                return false;
+            milestones.clear();
+            List<mocnap> mocnapList = mocnap.getAllMocNap(conn);
+            
+            for (mocnap m : mocnapList) {
+                MocnapMilestone milestone = new MocnapMilestone();
+                milestone.id = m.getId();
+                milestone.require = m.getRequired();
+                milestone.title = m.getDescriptor(); // descriptor là text mô tả
+                milestone.description = m.getDescriptor();
+                
+                // Parse rewards (items thưởng)
+                try {
+                    String rewards = m.getRewards();
+                    if (rewards != null && !rewards.isEmpty() && rewards.startsWith("[")) {
+                        JSONArray rewardsArray = new JSONArray(rewards);
+                        for (int i = 0; i < rewardsArray.length(); i++) {
+                            JSONObject itemObj = rewardsArray.getJSONObject(i);
+                            MocnapItem item = new MocnapItem();
+                            if (itemObj.has("item_id")) {
+                                item.itemId = itemObj.getInt("item_id");
+                            } else if (itemObj.has("item__id")) {
+                                item.itemId = itemObj.getInt("item__id");
+                            }
+                            item.quantity = itemObj.getInt("item_quantity");
+                            
+                            JSONArray optionsArray = itemObj.optJSONArray("item_options");
+                            if (optionsArray != null) {
+                                for (int j = 0; j < optionsArray.length(); j++) {
+                                    JSONObject optObj = optionsArray.getJSONObject(j);
+                                    MocnapOption opt = new MocnapOption();
+                                    opt.id = optObj.getInt("item_option_id");
+                                    opt.param = optObj.getInt("item_option_param");
+                                    item.options.add(opt);
+                                }
+                            }
+                            milestone.rewards.add(item);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                
+                milestones.add(milestone);
             }
-
-            byte[] data = loginSession.getService().loadMocnapRewards(timeoutMs);
-            if (data == null) {
-                System.err.println("[MocnapService] Failed to load mocnap rewards");
-                return false;
-            }
-
-            // Parse binary data
-            parseMocnapData(data);
+            
+            milestones.sort((a, b) -> Integer.compare(a.require, b.require));
             loaded = true;
-            System.out.println("[MocnapService] Loaded " + milestones.size() + " milestones");
             return true;
-
-        } catch (Exception e) {
-            System.err.println("[MocnapService] Error loading mocnap rewards");
+        } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    /**
-     * Parse binary data từ Login Server
-     * Format: [num_milestones:1][milestone_data...]
-     */
-    private void parseMocnapData(byte[] data) throws IOException {
-        milestones.clear();
-        DataInputStream dis = new DataInputStream(new java.io.ByteArrayInputStream(data));
-
-        // Read number of milestones
-        int numMilestones = dis.readUnsignedByte();
-
-        for (int i = 0; i < numMilestones; i++) {
-            MocnapMilestone milestone = new MocnapMilestone();
-
-            // Read milestone ID (4 bytes)
-            milestone.id = dis.readInt();
-
-            // Read require amount (4 bytes)
-            milestone.require = dis.readInt();
-
-            // Read title (UTF-8 string with length prefix)
-            int titleLen = dis.readUnsignedShort();
-            byte[] titleBytes = new byte[titleLen];
-            dis.readFully(titleBytes);
-            milestone.title = new String(titleBytes, "UTF-8");
-
-            // Read number of items
-            int numItems = dis.readUnsignedByte();
-            milestone.items = new ArrayList<>();
-
-            for (int j = 0; j < numItems; j++) {
-                MocnapItem item = new MocnapItem();
-
-                // Read item ID (4 bytes)
-                item.itemId = dis.readInt();
-
-                // Read quantity (4 bytes)
-                item.quantity = dis.readInt();
-
-                // Read number of options
-                int numOptions = dis.readUnsignedByte();
-                item.options = new ArrayList<>();
-
-                for (int k = 0; k < numOptions; k++) {
-                    MocnapOption option = new MocnapOption();
-
-                    // Read option ID (4 bytes)
-                    option.id = dis.readInt();
-
-                    // Read param (4 bytes)
-                    option.param = dis.readInt();
-
-                    item.options.add(option);
-                }
-
-                milestone.items.add(item);
-            }
-
-            milestones.add(milestone);
-        }
-
-        dis.close();
-    }
-
-    /**
-     * Lấy tất cả mốc nạp
-     */
     public List<MocnapMilestone> getAllMilestones() {
-        return milestones;
+        return new ArrayList<>(milestones);
     }
 
-    /**
-     * Lấy mốc nạp theo ID
-     */
     public MocnapMilestone getMilestoneById(int id) {
         for (MocnapMilestone m : milestones) {
             if (m.id == id) {
@@ -139,34 +96,22 @@ public class MocnapService {
         return null;
     }
 
-    /**
-     * Kiểm tra đã load config chưa
-     */
     public boolean isLoaded() {
         return loaded;
     }
-
-    /**
-     * Reload config từ Login Server
-     */
-    public void reload() {
-        loaded = false;
-        loadFromLoginServer(5000);
-    }
-
-    // ==================== DATA CLASSES ====================
 
     public static class MocnapMilestone {
         public int id;
         public int require;
         public String title;
-        public List<MocnapItem> items;
+        public String description;
+        public List<MocnapItem> rewards = new ArrayList<>();
     }
 
     public static class MocnapItem {
         public int itemId;
         public int quantity;
-        public List<MocnapOption> options;
+        public List<MocnapOption> options = new ArrayList<>();
     }
 
     public static class MocnapOption {

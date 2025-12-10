@@ -83,7 +83,7 @@ public abstract class Npc implements IAtionNpc {
         ShopService.gI().openShopNormal(player, this, shopId, order, player.gender);
     }
 
-    public void openShopWithGender1(Player player, int shopId, int order) {
+    public void openShopNoWithGender(Player player, int shopId, int order) {
         ShopService.gI().openShopSpecial(player, this, shopId, order, player.gender);
     }
 

@@ -31,32 +31,27 @@ public class PowerLimitManager {
     }
 
     public void load() {
-        try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM `power_limit`");
+        try (java.sql.Connection con = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = con.prepareStatement("SELECT * FROM `power_limit`")) {
             ResultSet rs = ps.executeQuery();
-            try {
-                while (rs.next()) {
-                    int id = rs.getShort("id");
-                    long power = rs.getLong("power");
-                    int hp = rs.getInt("hp");
-                    int mp = rs.getInt("mp");
-                    int damage = rs.getInt("damage");
-                    int defense = rs.getInt("defense");
-                    int critical = rs.getInt("critical");
-                    PowerLimit powerLimit = PowerLimit.builder()
-                            .id(id)
-                            .power(power)
-                            .hp(hp)
-                            .mp(mp)
-                            .damage(damage)
-                            .defense(defense)
-                            .critical(critical)
-                            .build();
-                    add(powerLimit);
-                }
-            } finally {
-                rs.close();
-                ps.close();
+            while (rs.next()) {
+                int id = rs.getShort("id");
+                long power = rs.getLong("power");
+                int hp = rs.getInt("hp");
+                int mp = rs.getInt("mp");
+                int damage = rs.getInt("damage");
+                int defense = rs.getInt("defense");
+                int critical = rs.getInt("critical");
+                PowerLimit powerLimit = PowerLimit.builder()
+                        .id(id)
+                        .power(power)
+                        .hp(hp)
+                        .mp(mp)
+                        .damage(damage)
+                        .defense(defense)
+                        .critical(critical)
+                        .build();
+                add(powerLimit);
             }
         } catch (Exception ex) {
             ex.printStackTrace();

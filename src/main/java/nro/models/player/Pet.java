@@ -1,6 +1,7 @@
 package nro.models.player;
 
 import nro.consts.ConstPlayer;
+import nro.consts.ItemId;
 import nro.models.item.CaiTrang;
 import nro.models.mob.Mob;
 import nro.models.skill.Skill;
@@ -19,10 +20,14 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class Pet extends Player {
 
-    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private static final byte HP = 0;
+    private static final byte MP = 1;
+    private static final byte DAME = 2;
+    private static final byte DEF = 3;
+    private static final byte CRIT = 4;
     private static final short ARANGE_CAN_ATTACK = 200;
     private static final short ARANGE_ATT_SKILL1 = 50;
-
+    public static final int PET_SKILL_COOLDOWN = 500;
     private static final short[][] PET_ID = { { 285, 286, 287 }, { 288, 289, 290 }, { 282, 283, 284 },
             { 304, 305, 303 } };
 
@@ -33,8 +38,73 @@ public class Pet extends Player {
     public static final byte FUSION = 4;
     public static boolean ANGRY;
 
+    public static int CAI_TRANG_MABU_ID = 578;
+    public static int CAI_TRANG_NORMA_TD_ID= 1641;
+    public static int CAI_TRANG_BLACK_SUPER_SAIYAN_5_ID = 2147;
+    public static int CAI_TRANG_BLACK_FIDE_TRAU_ID = 2147;
+    public static int CAI_TRANG_BLACK_SUPER_PICOLO_ID = 2146;
+
+
+
+
+
+    /**
+     * Enum định nghĩa loại đệ VIP và % bonus khi hợp thể Porata
+     */
+    public enum PetType {
+        NONE(0, "Đệ tử",CAI_TRANG_NORMA_TD_ID),  
+        MABU(10, "Mabư",ItemId.ITEM_578_CAI_TRANG_MA_BU),
+        SAYAN5(20, "Goten Normal",ItemId.ITEM_2128_CAI_TRANG_GOTEN),
+        BILL_NHI(30, "Black Goku SSJ4",ItemId.ITEM_2147_BLACK_SUPER_SAIYAN_5),
+        FIDE_TRAU(30, "Gogeta SSJ4",ItemId.ITEM_2143_GOKU_CHONG_CHONG),
+        CELL_BAO(40, "Goku Ultra",ItemId.ITEM_2117_CAI_TRANG_GOKU_ULTRA),
+        SUPER_PICOLO(50, "Legendary Broly",ItemId.ITEM_2148_BROLY_KHOI_NGUYEN);
+
+        private final int bonus;
+        private final String displayName;
+        private final int id_caitrang;
+
+        PetType(int bonus, String Name ,int id_itemp) {
+            this.bonus = bonus;
+            this.displayName = Name;
+            this.id_caitrang = id_itemp;
+        }
+        public int getBonus() {
+            return bonus;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public CaiTrang getCaiTrang() {
+            return Manager.CAI_TRANGS.stream()
+                .filter(ct -> ct.tempId == id_caitrang)
+                .findFirst()
+                .orElse(null);
+        }
+
+        public short getHead() {
+            CaiTrang ct = getCaiTrang();
+            return ct != null ? (short) ct.getHead() : -1;
+        }
+
+        public short getBody() {
+            CaiTrang ct = getCaiTrang();
+            return ct != null ? (short) ct.getBody() : -1;
+        }
+
+        public short getLeg() {
+            CaiTrang ct = getCaiTrang();
+            return ct != null ? (short) ct.getLeg() : -1;
+        }
+    }
+
     public Player master;
     public byte status = 0;
+    public int level = 1; // Level đệ tử
+    public long expLevel = 0; // Exp để lên level
+    public long accumulatedExp = 0; // Exp tích lũy cho đột phá
 
     public boolean isMabu;
 
@@ -153,7 +223,6 @@ public class Pet extends Player {
             this.status = FUSION;
             exitMapFusion();
             fusionEffect(master.fusion.typeFusion);
-            // Service.getInstance().player(master);
             Service.getInstance().Send_Caitrang(master);
             master.nPoint.calPoint();
             master.nPoint.setFullHpMp();
@@ -181,7 +250,6 @@ public class Pet extends Player {
             this.status = FUSION;
             exitMapFusion();
             fusionEffect(master.fusion.typeFusion);
-            // Service.getInstance().player(master);
             Service.getInstance().Send_Caitrang(master);
             master.nPoint.calPoint();
             master.nPoint.setFullHpMp();
@@ -325,14 +393,18 @@ public class Pet extends Player {
                                 }
                             }
                         } else {
+                            // Chưởng
                             this.playerSkill.skillSelect = getSkill(2);
                             if (this.playerSkill.skillSelect.skillId != -1) {
-                                if (SkillService.gI().canUseSkillWithMana(this)) {
-                                    SkillService.gI().useSkill(this, null, mobAttack, null);
-                                } else {
-                                    askPea();
+                                if (SkillService.gI().canUseSkillWithCooldown(this)) {
+                                    if (SkillService.gI().canUseSkillWithMana(this)) {
+                                        SkillService.gI().useSkill(this, null, mobAttack, null);
+                                    } else {
+                                        askPea();
+                                    }
                                 }
                             } else {
+                                // Fallback đấm nếu không có skill chưởng
                                 this.playerSkill.skillSelect = getSkill(1);
                                 if (SkillService.gI().canUseSkillWithCooldown(this)) {
                                     if (SkillService.gI().canUseSkillWithMana(this)) {
@@ -394,8 +466,6 @@ public class Pet extends Player {
                     }
                 }
             }
-            // followMaster(60);
-            // }
         } catch (Exception e) {
             // Logger.logException(Pet.class, e);
         }
@@ -528,22 +598,19 @@ public class Pet extends Player {
         }
     }
 
-    private long lastTimeIncreasePoint;
-
     private void increasePoint() {
-        if (this.nPoint != null && Util.canDoWithTime(lastTimeIncreasePoint, 500)) {
+        if (this.nPoint != null) {
             if (status != FUSION) {
                 long def = nPoint.defg;
                 if (Util.isTrue(1, 30)) {
                     if (def >= 3500) {
-                        this.nPoint.increasePoint((byte) 4, (short) 1);
+                        this.nPoint.increasePoint(CRIT, (short) 1);
                     } else {
-                        this.nPoint.increasePoint((byte) Util.nextInt(3, 4), (short) 1);
+                        this.nPoint.increasePoint((byte) Util.nextInt(DEF, CRIT), (short) 10);
                     }
                 } else {
-                    this.nPoint.increasePoint((byte) Util.nextInt(0, 2), (short) 3);
+                    this.nPoint.increasePoint((byte) Util.nextInt(HP, DAME), (short) 30);
                 }
-                lastTimeIncreasePoint = System.currentTimeMillis();
             }
         }
     }
@@ -584,21 +651,18 @@ public class Pet extends Player {
     }
 
     public short getAvatar() {
-        if (this.isMabu) {
-            return 297;
+        // Pet type
+        PetType petType = getPetType();
+        if (petType != PetType.NONE) {
+            short head = petType.getHead();
+            if (head != -1) {
+                return head;
+            }
         }
-        if (this.isBulo) {
-            return 1441;
-        }
-        if (this.isCellBao) {
-            return 1434;
-        }
-        if (this.isBillNhi) {
-            return 1378;
-        }
-        if (this.isFideTrau) {
-            return 1381;
 
+        // Default
+        if (this.nPoint.power < 1500000) {
+            return PET_ID[this.gender][0];
         } else {
             return PET_ID[3][this.gender];
         }
@@ -606,28 +670,36 @@ public class Pet extends Player {
 
     @Override
     public short getHead() {
+        // Effect skill
         if (effectSkill.isMonkey) {
             return (short) ConstPlayer.HEADMONKEY[effectSkill.levelMonkey - 1];
-        } else if (effectSkill.isSocola || effectSkin.isSocola) {
+        }
+        if (effectSkill.isSocola || effectSkin.isSocola) {
             return 412;
-        } else if (effectSkin != null && effectSkin.isHoaDa) {
+        }
+        if (effectSkin != null && effectSkin.isHoaDa) {
             return 454;
-        } else if (this.isMabu && !this.isTransform) {
-            return 297;
-        } else if (this.isBulo) {
-            return 1441;
-        } else if (this.isCellBao) {
-            return 1434;
-        } else if (this.isBillNhi) {
-            return 1378;
-        } else if (this.isFideTrau) {
-            return 1381;
-        } else if (inventory.itemsBody.get(5).isNotNullItem()) {
-            CaiTrang ct = Manager.gI().getCaiTrangByItemId(inventory.itemsBody.get(5).template.id);
-            if (ct != null) {
-                return (short) ((short) ct.getID()[0] != -1 ? ct.getID()[0] : inventory.itemsBody.get(5).template.part);
+        }
+
+        // Pet type
+        PetType petType = getPetType();
+        if (petType != PetType.NONE) {
+            short head = petType.getHead();
+            if (head != -1) {
+                return head;
             }
         }
+
+        // Cải trang
+        if (inventory.itemsBody.get(5).isNotNullItem()) {
+            CaiTrang ct = Manager.gI().getCaiTrangByItemId(inventory.itemsBody.get(5).template.id);
+            if (ct != null && ct.getHead() != -1) {
+                return (short) ct.getHead();
+            }
+            return inventory.itemsBody.get(5).template.part;
+        }
+
+        // Default
         if (this.nPoint.power < 1500000) {
             return PET_ID[this.gender][0];
         } else {
@@ -637,31 +709,40 @@ public class Pet extends Player {
 
     @Override
     public short getBody() {
+        // Effect skill
         if (effectSkill.isMonkey) {
             return 193;
-        } else if (effectSkill.isSocola || effectSkin.isSocola) {
+        }
+        if (effectSkill.isSocola || effectSkin.isSocola) {
             return 413;
-        } else if (effectSkin != null && effectSkin.isHoaDa) {
+        }
+        if (effectSkin != null && effectSkin.isHoaDa) {
             return 455;
-        } else if (this.isMabu && !this.isTransform) {
-            return 298;
-        } else if (this.isBulo) {
-            return 1438;
-        } else if (this.isCellBao) {
-            return 1435;
-        } else if (this.isBillNhi) {
-            return 1379;
-        } else if (this.isFideTrau) {
-            return 1382;
-        } else if (inventory.itemsBody.get(5).isNotNullItem()) {
-            CaiTrang ct = Manager.gI().getCaiTrangByItemId(inventory.itemsBody.get(5).template.id);
-            if (ct != null && ct.getID()[1] != -1) {
-                return (short) ct.getID()[1];
+        }
+
+        // Pet type
+        PetType petType = getPetType();
+        if (petType != PetType.NONE) {
+            short body = petType.getBody();
+            if (body != -1) {
+                return body;
             }
         }
+
+        // Cải trang
+        if (inventory.itemsBody.get(5).isNotNullItem()) {
+            CaiTrang ct = Manager.gI().getCaiTrangByItemId(inventory.itemsBody.get(5).template.id);
+            if (ct != null && ct.getBody() != -1) {
+                return (short) ct.getBody();
+            }
+        }
+
+        // Áo
         if (inventory.itemsBody.get(0).isNotNullItem()) {
             return inventory.itemsBody.get(0).template.part;
         }
+
+        // Default
         if (this.nPoint.power < 1500000) {
             return PET_ID[this.gender][1];
         } else {
@@ -671,32 +752,40 @@ public class Pet extends Player {
 
     @Override
     public short getLeg() {
+        // Effect skill
         if (effectSkill.isMonkey) {
             return 194;
-        } else if (effectSkill.isSocola || effectSkin.isSocola) {
+        }
+        if (effectSkill.isSocola || effectSkin.isSocola) {
             return 414;
-        } else if (effectSkin != null && effectSkin.isHoaDa) {
+        }
+        if (effectSkin != null && effectSkin.isHoaDa) {
             return 456;
-        } else if (this.isMabu && !this.isTransform) {
-            return 299;
-        } else if (this.isBulo) {
-            return 1439;
-        } else if (this.isCellBao) {
-            return 1436;
-        } else if (this.isBillNhi) {
-            return 1380;
-        } else if (this.isFideTrau) {
-            return 1383;
-        } else if (inventory.itemsBody.get(5).isNotNullItem()) {
-            CaiTrang ct = Manager.gI().getCaiTrangByItemId(inventory.itemsBody.get(5).template.id);
-            if (ct != null && ct.getID()[2] != -1) {
-                return (short) ct.getID()[2];
+        }
+
+        // Pet type
+        PetType petType = getPetType();
+        if (petType != PetType.NONE) {
+            short leg = petType.getLeg();
+            if (leg != -1) {
+                return leg;
             }
         }
+
+        // Cải trang
+        if (inventory.itemsBody.get(5).isNotNullItem()) {
+            CaiTrang ct = Manager.gI().getCaiTrangByItemId(inventory.itemsBody.get(5).template.id);
+            if (ct != null && ct.getLeg() != -1) {
+                return (short) ct.getLeg();
+            }
+        }
+
+        // Quần
         if (inventory.itemsBody.get(1).isNotNullItem()) {
             return inventory.itemsBody.get(1).template.part;
         }
 
+        // Default
         if (this.nPoint.power < 1500000) {
             return PET_ID[this.gender][2];
         } else {
@@ -756,7 +845,7 @@ public class Pet extends Player {
         } else if (rd <= tiLeKame + tiLeMasenko + tiLeAntomic) {
             skill = SkillUtil.createSkill(Skill.ANTOMIC, 1);
         }
-        skill.coolDown = 1000;
+        skill.coolDown = PET_SKILL_COOLDOWN; 
         this.playerSkill.skills.set(1, skill);
     }
 
@@ -813,5 +902,166 @@ public class Pet extends Player {
             Service.getInstance().chatJustForMe(master, this, "Mi làm ta nổi giận rồi " + playerAttack.name
                     .replace("$", ""));
         }
+    }
+
+    // ==================== LEVEL SYSTEM ====================
+
+    public static final int MAX_LEVEL = 7;
+
+    /**
+     * % bonus chỉ số mỗi level (HP, MP, Dame)
+     */
+    public static final int BONUS_PERCENT_PER_LEVEL = 5;
+
+    /**
+     * Exp cần cho từng level (level 1-7)
+     */
+    private static final long[] EXP_REQUIRED = {
+            2000, // Level 1 -> 2
+            5000, // Level 2 -> 3
+            10000, // Level 3 -> 4
+            20000, // Level 4 -> 5
+            40000, // Level 5 -> 6
+            80000, // Level 6 -> 7
+            0 // Level 7 (max)
+    };
+
+    /**
+     * Lấy exp cần để lên level tiếp theo
+     */
+    public long getExpRequired() {
+        if (level <= 0 || level > MAX_LEVEL)
+            return 0;
+        return EXP_REQUIRED[level - 1];
+    }
+
+    /**
+     * Lấy exp cần cho level cụ thể
+     */
+    public static long getExpRequiredForLevel(int lvl) {
+        if (lvl <= 0 || lvl > MAX_LEVEL)
+            return 0;
+        return EXP_REQUIRED[lvl - 1];
+    }
+
+    public boolean addExp(long exp) {
+        if (level >= MAX_LEVEL) {
+            if (master != null) {
+                Service.getInstance().sendThongBao(master,
+                        "Đệ tử " + name + " đã đạt level tối đa!");
+            }
+            return false;
+        }
+
+        this.accumulatedExp += exp;
+
+        if (master != null) {
+            Service.getInstance().sendThongBao(master,
+                    "Đệ tử " + name + " nhận được " + exp + " exp! (Tích lũy: " + accumulatedExp + ")");
+        }
+
+        return true;
+    }
+
+    public boolean isMaxLevel() {
+        return level >= MAX_LEVEL;
+    }
+
+    public int calculateBreakthroughAttempts() {
+        if (level >= MAX_LEVEL) {
+            return 0;
+        }
+        long expRequired = getExpRequired();
+        if (expRequired <= 0) {
+            return 0;
+        }
+        return (int) (accumulatedExp / expRequired);
+    }
+
+    public boolean canBreakthrough() {
+        if (level >= MAX_LEVEL) {
+            return false;
+        }
+        return accumulatedExp >= getExpRequired();
+    }
+
+    public BreakthroughResult attemptBreakthrough() {
+        int oldLevel = this.level;
+        long expRequired = getExpRequired();
+
+        // Kiểm tra điều kiện
+        if (level >= MAX_LEVEL || accumulatedExp < expRequired) {
+            return new BreakthroughResult(false, oldLevel, oldLevel, 0, accumulatedExp);
+        }
+
+        // Trừ exp
+        accumulatedExp -= expRequired;
+
+        // Random 50% thành công
+        boolean success = Util.nextInt(0, 99) < 50;
+
+        if (success) {
+            level++;
+        }
+
+        return new BreakthroughResult(success, oldLevel, level, expRequired, accumulatedExp);
+    }
+
+    /**
+     * Lấy level hiện tại của pet
+     */
+    public int getLevel() {
+        return this.level;
+    }
+
+    /**
+     * Lấy exp hiện tại của pet
+     */
+    public long getExpLevel() {
+        return this.expLevel;
+    }
+
+    /**
+     * Lấy % bonus chỉ số từ level (HP, MP, Dame)
+     * Level 1: 0%, Level 2: 5%, Level 3: 10%, ..., Level 7: 30%
+     */
+    public int getBonusPercent() {
+        if (level <= 1)
+            return 0;
+        return (level - 1) * BONUS_PERCENT_PER_LEVEL;
+    }
+
+    /**
+     * Lấy loại đệ VIP hiện tại
+     */
+    public PetType getPetType() {
+        if (isCellBao)
+            return PetType.CELL_BAO;
+        if (isBillNhi)
+            return PetType.BILL_NHI;
+        if (isFideTrau)
+            return PetType.FIDE_TRAU;
+        if (isBulo)
+            return PetType.SAYAN5;
+        if (isMabu)
+            return PetType.MABU;
+        if (isSuperPicolo)
+            return PetType.SUPER_PICOLO;
+        return PetType.NONE;
+    }
+
+    /**
+     * Kiểm tra có đang hợp thể Porata không
+     */
+    public boolean isInPorataFusion() {
+        int fusionType = master.fusion.typeFusion;
+        return fusionType == ConstPlayer.HOP_THE_PORATA || fusionType == ConstPlayer.HOP_THE_PORATA2;
+    }
+
+    public int getPorataBonus() {
+        if (!isInPorataFusion()) {
+            return 0;
+        }
+        return getPetType().getBonus();
     }
 }

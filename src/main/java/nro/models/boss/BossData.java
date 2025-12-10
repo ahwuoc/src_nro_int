@@ -1513,22 +1513,6 @@ public class BossData {
                         },
                         _15_PHUT);
 
-        // public static final BossData THAN_MEO = new BossData(
-        // "Thần mèo", //name
-        // ConstPlayer.XAYDA, //gender
-        // Boss.DAME_NORMAL, //type dame
-        // Boss.HP_NORMAL, //type hp
-        // 50000, //dame
-        // new int[][]{{100000000}}, //hp
-        // new short[]{89, 90, 91}, //outfit
-        // new short[]{46}, //map join
-        // new int[][]{ //skill
-        // {Skill.DRAGON, 1, 1000}, {Skill.DRAGON, 2, 2000}, {Skill.DRAGON, 3, 3000},
-        // {Skill.DRAGON, 7, 7000},
-        // {Skill.GALICK, 1, 1000}
-        // },
-        // 0
-        // );
         public static final BossData FIDE_DAI_CA_2 = new BossData(
                         "Fide đại ca 2", // name
                         ConstPlayer.XAYDA, // gender
@@ -1548,6 +1532,64 @@ public class BossData {
                                         { Skill.GALICK, 1, 1000 }
                         },
                         _0_GIAY);
+
+        public static final BossData BOSS_WORLD = new BossData(
+                        "Boss Thế Giới", // name
+                        ConstPlayer.XAYDA, // gender
+                        Boss.DAME_NORMAL, // type dame
+                        Boss.HP_NORMAL, // type hp
+                        100000, // dame
+                        new int[][] { { 2_000_000_000 } }, // hp
+                        new short[] { 1442, 1443, 1444 }, // outfit
+                        new short[] { 150 }, // map join
+                        new int[][] { // skill
+                                        { Skill.DRAGON, 1, 1000 }, { Skill.DRAGON, 2, 2000 }, { Skill.DRAGON, 3, 3000 },
+                                        { Skill.DRAGON, 7, 7000 },
+                                        { Skill.ANTOMIC, 1, 1000 }, { Skill.ANTOMIC, 2, 1200 },
+                                        { Skill.ANTOMIC, 4, 1500 }, { Skill.ANTOMIC, 5, 1700 },
+                                        { Skill.MASENKO, 1, 1000 }, { Skill.MASENKO, 2, 1200 },
+                                        { Skill.MASENKO, 4, 1500 }, { Skill.MASENKO, 5, 1700 },
+                                        { Skill.GALICK, 1, 1000 }
+                        },
+                        _1_GIAY);
+        public static final BossData BOSS_GOKU_SSJ4 = new BossData(
+                        "Fusion Goku SSJ4", // name
+                        ConstPlayer.XAYDA, // gender
+                        Boss.DAME_NORMAL, // type dame
+                        Boss.HP_NORMAL, // type hp
+                        100000, // dame
+                        new int[][] { { 2_000_000_000 } }, // hp
+                        new short[] { 1442, 1443, 1444 }, // outfit
+                        new short[] { 150 }, // map join
+                        new int[][] { // skill
+                                        { Skill.DRAGON, 1, 1000 }, { Skill.DRAGON, 2, 2000 }, { Skill.DRAGON, 3, 3000 },
+                                        { Skill.DRAGON, 7, 7000 },
+                                        { Skill.ANTOMIC, 1, 1000 }, { Skill.ANTOMIC, 2, 1200 },
+                                        { Skill.ANTOMIC, 4, 1500 }, { Skill.ANTOMIC, 5, 1700 },
+                                        { Skill.MASENKO, 1, 1000 }, { Skill.MASENKO, 2, 1200 },
+                                        { Skill.MASENKO, 4, 1500 }, { Skill.MASENKO, 5, 1700 },
+                                        { Skill.GALICK, 1, 1000 }
+                        },
+                        _1_GIAY);
+               public static final BossData SUPER_SAIYAN_5 = new BossData(
+                        "Super Goku Saiyan 5", // name
+                        ConstPlayer.XAYDA, // gender
+                        Boss.DAME_NORMAL, // type dame
+                        Boss.HP_NORMAL, // type hp
+                        100000, // dame
+                        new int[][] { { 2_000_000_000 } }, // hp
+                        new short[] { 1442, 1443, 1444 }, // outfit
+                        new short[] { 150 }, // map join
+                        new int[][] { // skill
+                                        { Skill.DRAGON, 1, 1000 }, { Skill.DRAGON, 2, 2000 }, { Skill.DRAGON, 3, 3000 },
+                                        { Skill.DRAGON, 7, 7000 },
+                                        { Skill.ANTOMIC, 1, 1000 }, { Skill.ANTOMIC, 2, 1200 },
+                                        { Skill.ANTOMIC, 4, 1500 }, { Skill.ANTOMIC, 5, 1700 },
+                                        { Skill.MASENKO, 1, 1000 }, { Skill.MASENKO, 2, 1200 },
+                                        { Skill.MASENKO, 4, 1500 }, { Skill.MASENKO, 5, 1700 },
+                                        { Skill.GALICK, 1, 1000 }
+                        },
+                        _1_GIAY);
 
         public static final BossData FIDE_DAI_CA_3 = new BossData(
                         "Fide đại ca 3", // name

@@ -24,8 +24,8 @@ public class MiniPetManager implements IManager<MinipetTemplate> {
     }
 
     public void load() {
-        try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM mini_pet");
+        try (java.sql.Connection con = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = con.prepareStatement("SELECT * FROM mini_pet")) {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 int id = rs.getInt("id_temp");
@@ -34,8 +34,6 @@ public class MiniPetManager implements IManager<MinipetTemplate> {
                 short leg = rs.getShort("leg");
                 add(new MinipetTemplate(id, head, body, leg));
             }
-            ps.close();
-            rs.close();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

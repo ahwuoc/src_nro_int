@@ -28,9 +28,9 @@ public class Chill2 extends FutureBoss {
         int[] tempIds2 = new int[]{565, 560, 562, 564, 566, 561};
         int tempId = -1;
 
-        if (Util.isTrue(1, 35)) {
+        if (Util.isTrueDrop( 1, 35,pl)) {
             tempId = tempIds1[Util.nextInt(0, tempIds1.length - 1)];
-        } else if (Util.isTrue(1, 100)) {
+        } else if (Util.isTrueDrop( 1, 100,pl)) {
             tempId = tempIds2[Util.nextInt(0, tempIds2.length - 1)];
         }
         if (tempId != -1) {

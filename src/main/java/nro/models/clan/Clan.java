@@ -172,7 +172,7 @@ public class Clan {
     public void addSMTNClan(Player plOri, long param) {
         for (Player pl : this.membersInGame) {
             if (!plOri.equals(pl) && plOri.zone.equals(pl.zone)) {
-                Service.getInstance().addSMTN(pl, (byte) 1, param, false);
+                Service.getInstance().add_TNSM(pl, (byte) 1, param, false);
             }
         }
     }

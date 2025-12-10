@@ -195,7 +195,7 @@ public class PlayerDAO {
 
             JSONArray dataTask = new JSONArray();
             dataTask.add(0);
-            dataTask.add(20);
+            dataTask.add(5);
             dataTask.add(0);
             String task = dataTask.toJSONString();
 
@@ -343,6 +343,17 @@ public class PlayerDAO {
             }
         }
 
+    }
+
+    public static void updateVipLevel(Player player) {
+        try (Connection con = DBService.gI().getConnectionForSaveData();
+             PreparedStatement ps = con.prepareStatement("UPDATE account SET level_vip = ? WHERE id = ?")) {
+            ps.setInt(1, player.getSession().level_vip);
+            ps.setInt(2, player.getSession().userId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            Log.error(PlayerDAO.class, e, "Lỗi update vip level cho player: " + player.name);
+        }
     }
 
     public static void updatePlayer(Player player, Connection connection) {
@@ -647,12 +658,51 @@ public class PlayerDAO {
                     dataItemTime.add(player.itemTime.isUseBoHuyet2
                             ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeBoHuyet2))
                             : 0);
+                    // Lucky - lưu thời gian còn lại (có thể cộng dồn)
+                    long luckyRemaining = 0;
+                    if (player.itemTime.isUseLucky) {
+                        long elapsed = System.currentTimeMillis() - player.itemTime.lastTimeLucky;
+                        luckyRemaining = player.itemTime.luckyTimeRemaining - elapsed;
+                        if (luckyRemaining < 0)
+                            luckyRemaining = 0;
+                    }
+                    dataItemTime.add(luckyRemaining);
 
                     // BiNgo
                     dataItemTime.add(player.effectSkill.isBiNgo
                             ? (30_000 - (System.currentTimeMillis() - player.effectSkill.lastBiNgo))
                             : 0);
                     // BiNgo
+
+                    // Buff x5 TNSM - lưu thời gian còn lại
+                    long buffX5TNSMRemaining = 0;
+                    if (player.itemTime.isUseBuffX5TNSM) {
+                        long elapsed = System.currentTimeMillis() - player.itemTime.lastTimeBuffX5TNSM;
+                        buffX5TNSMRemaining = player.itemTime.buffX5TNSMTimeRemaining - elapsed;
+                        if (buffX5TNSMRemaining < 0)
+                            buffX5TNSMRemaining = 0;
+                    }
+                    dataItemTime.add(buffX5TNSMRemaining);
+
+                    // Buff x10 TNSM - lưu thời gian còn lại
+                    long buffX10TNSMRemaining = 0;
+                    if (player.itemTime.isUseBuffX10TNSM) {
+                        long elapsed = System.currentTimeMillis() - player.itemTime.lastTimeBuffX10TNSM;
+                        buffX10TNSMRemaining = player.itemTime.buffX10TNSMTimeRemaining - elapsed;
+                        if (buffX10TNSMRemaining < 0)
+                            buffX10TNSMRemaining = 0;
+                    }
+                    dataItemTime.add(buffX10TNSMRemaining);
+
+                    // Buff x15 TNSM - lưu thời gian còn lại
+                    long buffX15TNSMRemaining = 0;
+                    if (player.itemTime.isUseBuffX15TNSM) {
+                        long elapsed = System.currentTimeMillis() - player.itemTime.lastTimeBuffX15TNSM;
+                        buffX15TNSMRemaining = player.itemTime.buffX15TNSMTimeRemaining - elapsed;
+                        if (buffX15TNSMRemaining < 0)
+                            buffX15TNSMRemaining = 0;
+                    }
+                    dataItemTime.add(buffX15TNSMRemaining);
 
                     String itemTime = dataItemTime.toJSONString();
 
@@ -863,6 +913,9 @@ public class PlayerDAO {
                         jPetPoint.put("limit_power", player.pet.nPoint.limitPower);
                         jPetPoint.put("hp", player.pet.nPoint.hp);
                         jPetPoint.put("mp", player.pet.nPoint.mp);
+                        jPetPoint.put("level", player.pet.level);
+                        jPetPoint.put("exp_level", player.pet.expLevel);
+                        jPetPoint.put("accumulated_exp", player.pet.accumulatedExp);
                         petPoint = jPetPoint.toJSONString();
 
                         for (Item item : player.pet.inventory.itemsBody) {
@@ -1151,18 +1204,49 @@ public class PlayerDAO {
         }
     }
 
-    public static void subVndBar(Player player, int num) {
+    public static void subVnd(Player player, int num) {
+        if (num <= 0) {
+            return;
+        }
+        if (player.getSession().vndBar < num) {
+            Log.error(PlayerDAO.class, null, "Không đủ VND để trừ: " + player.name + " (cần: " + num + ", có: " + player.getSession().vndBar + ")");
+            return;
+        }
         PreparedStatement ps = null;
         try (Connection con = DBService.gI().getConnectionForSaveData();) {
-            ps = con.prepareStatement("update account set vnd = (vnd - ?) where id = ?");
+            ps = con.prepareStatement("update account set vnd = GREATEST(0, vnd - ?) where id = ?");
             ps.setInt(1, num);
             ps.setInt(2, player.getSession().userId);
+            player.getSession().vndBar -= num;
             ps.executeUpdate();
         } catch (Exception e) {
             Log.error(PlayerDAO.class, e, "Lỗi update vnd " + player.name);
         } finally {
             try {
                 ps.close();
+            } catch (SQLException ex) {
+                java.util.logging.Logger.getLogger(PlayerDAO.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    public static void addVnd(Player player, int amount) {
+        PreparedStatement ps = null;
+        try (Connection con = DBService.gI().getConnectionForSaveData();) {
+
+            ps = con.prepareStatement("UPDATE account SET vnd = vnd + ? WHERE id = ?");
+            ps.setInt(1, amount);
+            ps.setInt(2, player.getSession().userId);
+            ps.executeUpdate();
+
+            player.getSession().vndBar += amount;
+
+        } catch (Exception e) {
+            Log.error(PlayerDAO.class, e, "Lỗi update vnd " + player.name);
+        } finally {
+            try {
+                if (ps != null)
+                    ps.close();
             } catch (SQLException ex) {
                 java.util.logging.Logger.getLogger(PlayerDAO.class.getName()).log(Level.SEVERE, null, ex);
             }

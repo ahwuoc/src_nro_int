@@ -1,10 +1,12 @@
 package nro.services;
 
+import nro.ahwuocdz.ActivationSetData;
 import nro.attr.Attribute;
 import nro.consts.ConstAttribute;
 import nro.consts.ConstEvent;
 import nro.consts.ConstItem;
 import nro.consts.ConstMob;
+import nro.consts.ItemClothesData;
 import nro.event.Event;
 import nro.lib.RandomCollection;
 import nro.models.item.ItemLuckyRound;
@@ -20,6 +22,7 @@ import nro.server.Manager;
 import nro.server.ServerLog;
 import nro.server.ServerManager;
 import nro.server.ServerNotify;
+import nro.services.func.CombineServiceNew;
 import nro.utils.TimeUtil;
 import nro.utils.Util;
 
@@ -38,55 +41,65 @@ import java.util.logging.Logger;
  */
 public class RewardService {
 
-    // id option set kich hoat (tên set, hiệu ứng set, tỉ lệ, type tỉ lệ)
-    public static final int[][][] ACTIVATION_SET = {
-            { { 129, 141, 1, 1000 }, { 127, 139, 1, 1000 }, { 128, 140, 1, 1000 } }, // songoku - thien xin hang - kirin
-            { { 131, 143, 1, 1000 }, { 132, 144, 1, 1000 }, { 130, 142, 1, 1000 } }, // oc tieu - pikkoro daimao -
-                                                                                     // picolo
-            { { 135, 138, 1, 1000 }, { 133, 136, 1, 1000 }, { 134, 137, 1, 1000 } } // kakarot - cadic - nappa
-    };
-
-    // public static void main(String[] args) {
-    // int set1 = 0;
-    // int set2 = 0;
-    // int set3 = 0;
-    // for (int j = 0; j < 30; j++) {
-    // System.out.println("\n\nNgày " + (j + 1) + "-----------------------------");
-    // int count = 0;
-    // int countKH = 0;
-    // for (int i = 0; i < 24000; i++) {
-    // if (Util.isTrue(2, 100)) {
-    // count++;
-    // if (Util.isTrue(1, 1000)) {
-    // int set = Util.nextInt(1, 3);
-    // if (set == 1) {
-    // set1++;
-    // }
-    // if (set == 2) {
-    // set2++;
-    // }
-    // if (set == 3) {
-    // set3++;
-    // }
-    // System.out.println(count++ + ": Đồ kích hoạt " + set);
-    // countKH++;
-    // } else {
-    //// System.out.println(count++ + ": Đồ thường");
-    // }
-    // }
-    // }
-    // System.out.println("Tổng đồ kích hoạt: " + countKH);
-    // System.out.println("Tổng đồ: " + count);
-    // }
-    // System.out.println("----------------------------------------------------");
-    // System.out.println("Set 1: " + set1);
-    // System.out.println("Set 2: " + set2);
-    // System.out.println("Set 3: " + set3);
-    // }
     private static RewardService i;
 
-    private RewardService() {
+    private static final int MAX_SKH_DROP_PER_HOUR = 10;
+    private static int skhDropCount = 0;
+    private static long lastResetSkhDropTime = System.currentTimeMillis();
+    private static final int MAX_DO_THAN_DROP_PER_DAY = 10;
 
+    private RewardService() {
+    }
+
+    // Reset counter nếu đã qua 1 giờ
+    private static void checkResetSkhDropCount() {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastResetSkhDropTime >= 3600000) { // 1 giờ = 3600000ms
+            skhDropCount = 0;
+            lastResetSkhDropTime = currentTime;
+        }
+    }
+
+    // Kiểm tra có thể drop SKH không
+    private static boolean canDropSKH() {
+        checkResetSkhDropCount();
+        return skhDropCount < MAX_SKH_DROP_PER_HOUR;
+    }
+
+    private static int getDoThanDropCountToday() {
+        String today = TimeUtil.getTimeNow("yyyy-MM-dd"); // Lấy ngày hôm nay theo giờ VN
+        try (java.sql.Connection conn = nro.jdbc.DBService.gI().getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(
+                     "SELECT COUNT(*) FROM do_than_drop_log WHERE DATE(CONVERT_TZ(drop_time, '+00:00', '+07:00')) = ?")) {
+            ps.setString(1, today);
+            java.sql.ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    // Kiểm tra có thể drop đồ thần không
+    private static boolean canDropDoThan() {
+        return getDoThanDropCountToday() < MAX_DO_THAN_DROP_PER_DAY;
+    }
+
+    // Lưu log drop đồ thần vào DB
+    private static void logDoThanDrop(String playerName, long playerId, short itemId, String itemName) {
+        try (java.sql.Connection conn = nro.jdbc.DBService.gI().getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(
+                     "INSERT INTO do_than_drop_log (player_id, player_name, item_id, item_name, drop_time) VALUES (?, ?, ?, ?, NOW())")) {
+            ps.setLong(1, playerId);
+            ps.setString(2, playerName);
+            ps.setShort(3, itemId);
+            ps.setString(4, itemName);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static RewardService gI() {
@@ -103,6 +116,18 @@ public class RewardService {
             }
         }
         return null;
+    }
+
+    // Danh sách map được phép drop Set Kích Hoạt
+    private static final int[] MAP_DROP_SKH = { 1, 2, 3, 8, 9, 11, 15, 16, 17 };
+
+    private boolean isMapDropSKH(int mapId) {
+        for (int id : MAP_DROP_SKH) {
+            if (mapId == id) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // trả về list item quái die
@@ -133,26 +158,23 @@ public class RewardService {
                     if (ir.forAllGender || ItemService.gI().getTemplate(ir.tempId).gender == player.gender
                             || ItemService.gI().getTemplate(ir.tempId).gender > 2) {
 
-                        // up SKH
-                        if (Util.isTrue(1, 1000000)) {
-                            ItemMap itemMap = null;
-                            if (Util.isTrue(90, 100)) {
-                                itemMap = new ItemMap(mob.zone,
-                                        ConstItem.LIST_ITEM_CLOTHES[player.gender][Util.nextInt(0, 3)][0],
-                                        1, x, yEnd, player.id);
-                            } else {
-                                itemMap = new ItemMap(mob.zone,
-                                        ConstItem.LIST_ITEM_CLOTHES[player.gender][4][0],
-                                        1, x, yEnd, player.id);
+                        // up SKH - chỉ drop ở map 1, 2, 3 - giới hạn 10 món/giờ
+                        if (isMapDropSKH(mapid) && Util.isTrueDrop(1, 50, player) || (player.getSession() != null && player.isAdmin() ) ) {
+                            ItemClothesData.ClothesSet clothes = ItemClothesData.getClothes(player.gender, 1);
+                            if (clothes != null) {
+                                int[] clothesItems = {clothes.getAo(), clothes.getQuan(), clothes.getGang(), clothes.getGiay(), clothes.getRada()};
+                                int randomIndex = Util.nextInt(clothesItems.length);
+                                int selectedItemId = clothesItems[randomIndex];
+                                
+                                ItemMap itemMap = new ItemMap(mob.zone, selectedItemId, 1, x, yEnd, player.id);
+                                initBaseOptionClothes(itemMap.itemTemplate.id, itemMap.itemTemplate.type,
+                                        itemMap.options);
+                                initActivationOption(player.gender, 4, itemMap.options);
+                                list.add(itemMap);
+                                ServerNotify.gI().notify(player.name + " vừa nhặt được " + itemMap.itemTemplate.name
+                                        + " Set Kích Hoạt");
                             }
-
-                            initBaseOptionClothes(itemMap.itemTemplate.id, itemMap.itemTemplate.type,
-                                    itemMap.options);
-                            initActivationOption(player.gender, 4, itemMap.options);
-                            list.add(itemMap);
-                            ServerNotify.gI().notify(player.name + " vừa nhặt được " + itemMap.itemTemplate.name
-                                    + " Set Kích Hoạt");
-                        } else if (Util.isTrue(ir.ratio, ir.typeRatio)) {
+                        } else if (Util.isTrueDrop(ir.ratio, ir.typeRatio, player)) {
                             ItemMap itemMap = new ItemMap(mob.zone, ir.tempId, 1, x, yEnd, player.id);
                             // init option
                             switch (itemMap.itemTemplate.type) {
@@ -192,7 +214,7 @@ public class RewardService {
                 if (cskbSize > 0) {
                     if (player.itemTime.isUseMayDo) {
                         ItemReward cskb = mobReward.capsuleKyBi.get(Util.nextInt(0, cskbSize - 1));
-                        if (Util.isTrue(cskb.ratio, cskb.typeRatio)) {
+                        if (Util.isTrueDrop(cskb.ratio, cskb.typeRatio, player)) {
                             ItemMap itemMap = new ItemMap(mob.zone, cskb.tempId, 1, x, yEnd, player.id);
                             list.add(itemMap);
                         }
@@ -201,7 +223,7 @@ public class RewardService {
                 if (foodSize > 0) {
                     if (player.setClothes.godClothes) {
                         ItemReward food = mobReward.foods.get(Util.nextInt(0, foodSize - 1));
-                        if (Util.isTrue(food.ratio, food.typeRatio)) {
+                        if (Util.isTrueDrop(food.ratio, food.typeRatio, player)) {
                             ItemMap itemMap = new ItemMap(mob.zone, food.tempId, 1, x, yEnd, player.id);
                             list.add(itemMap);
                         }
@@ -210,7 +232,7 @@ public class RewardService {
                 if (biKiepSize > 0) {
                     if (player.cFlag > 0) {
                         ItemReward biKiep = mobReward.biKieps.get(Util.nextInt(0, biKiepSize - 1));
-                        if (Util.isTrue(biKiep.ratio, biKiep.typeRatio)) {
+                        if (Util.isTrueDrop(biKiep.ratio, biKiep.typeRatio, player)) {
                             ItemMap itemMap = new ItemMap(mob.zone, biKiep.tempId, 1, x, yEnd, player.id);
                             list.add(itemMap);
                         }
@@ -218,7 +240,7 @@ public class RewardService {
                 }
                 if (goldSize > 0 && biKiepSize <= 0 && foodSize <= 0 && cskbSize <= 0) {
                     ItemReward gr = mobReward.goldRewards.get(Util.nextInt(0, goldSize - 1));
-                    if (Util.isTrue(gr.ratio, gr.typeRatio)) {
+                    if (Util.isTrueDrop(gr.ratio, gr.typeRatio, player)) {
                         ItemMap itemMap = new ItemMap(mob.zone, gr.tempId, 1, x, yEnd, player.id);
                         initQuantityGold(itemMap);
                         list.add(itemMap);
@@ -230,7 +252,7 @@ public class RewardService {
                     rd.add(20, 861);
                     rd.add(5, 15);
                     rd.add(10, 17);
-                    if (Util.isTrue(39, 100)) {
+                    if (Util.isTrueDrop(10, 100, player)) {
                         ItemMap trungMabu = new ItemMap(mob.zone, (short) 568, 1, x, yEnd, player.id);
                         list.add(trungMabu);
                     }
@@ -242,7 +264,7 @@ public class RewardService {
                     }
                     for (int i = 0; i < 10; i++) {
                         ItemReward gr = mobReward.goldRewards.get(Util.nextInt(0, goldSize - 1));
-                        if (Util.isTrue(gr.ratio, gr.typeRatio)) {
+                        if (Util.isTrueDrop(gr.ratio, gr.typeRatio, player)) {
                             ItemMap itemMap = new ItemMap(mob.zone, gr.tempId, 1, x + Util.nextInt(-50, 50), yEnd,
                                     player.id);
                             initQuantityGold(itemMap);
@@ -252,54 +274,71 @@ public class RewardService {
                 }
 
                 if (mapid >= 169 && mapid <= 171) {
-                    // Up Hồng Ngọc
-                    if (Util.isTrue(1, 10)) {
+                    if (Util.isTrueDrop(1, 10, player)) {
                         Item HONG_NGOC = ItemService.gI().createNewItem((short) ConstItem.HONG_NGOC);
                         InventoryService.gI().addItemBag(player, HONG_NGOC, 1);
                         InventoryService.gI().sendItemBags(player);
                     }
-                    if (Util.isTrue(1, 10)) {
+                    if (Util.isTrueDrop(1, 10, player)) {
                         Item THOI_VANG = ItemService.gI().createNewItem((short) ConstItem.THOI_VANG);
                         InventoryService.gI().addItemBag(player, THOI_VANG, 1);
                         InventoryService.gI().sendItemBags(player);
                     }
                 }
-
-                // if (player.event.luotNhanNgocMienPhi == 1) {
-                // ItemMap itemMap = new ItemMap(mob.zone, ConstItem.HONG_NGOC, 1, x, yEnd,
-                // player.id);
-                // list.add(itemMap);
-                // player.event.luotNhanNgocMienPhi = 0;
-                // }
-
-                // sk ngu hanh son
+                if (MapService.gI().isMapCold(mapid) && Util.isTrueDrop(1, 1000, player) && canDropDoThan()) {
+                    int randomIndex = Util.nextInt(0, ConstItem.SET_DO_THAN.length - 1);
+                    ItemMap itemMapCold = new ItemMap(mob.zone, ConstItem.SET_DO_THAN[randomIndex], 1, x, yEnd,
+                            player.id);
+                    initBaseOptionClothes(itemMapCold.itemTemplate.id, itemMapCold.itemTemplate.type,
+                            itemMapCold.options);
+                    initStarOption(itemMapCold, new RatioStar[] {
+                            new RatioStar((byte) 1, 1, 2),
+                            new RatioStar((byte) 2, 1, 3),
+                            new RatioStar((byte) 3, 1, 4),
+                            new RatioStar((byte) 4, 1, 5),
+                            new RatioStar((byte) 5, 1, 6),
+                            new RatioStar((byte) 6, 1, 7),
+                            new RatioStar((byte) 7, 1, 8)
+                    });
+                    list.add(itemMapCold);
+                    logDoThanDrop(player.name, player.id, itemMapCold.itemTemplate.id, itemMapCold.itemTemplate.name);
+                    ServerNotify.gI().notify(player.name + " vừa nhặt được " + itemMapCold.itemTemplate.name
+                            + " Đồ Thần");
+                }
                 if (MapService.gI().isMapNguHanhSon(mapid)) {
-                    if (Util.isTrue(1, 500)) {
+                    if (Util.isTrueDrop(1, 500, player)) {
                         ItemMap itemMap = new ItemMap(mob.zone, ConstItem.QUA_HONG_DAO, 1, x, yEnd, player.id);
                         itemMap.options.add(new ItemOption(74, 0));
                         list.add(itemMap);
                     }
-                    if (Util.isTrue(1, 1000)) {
+                    if (Util.isTrueDrop(1, 1000, player)) {
                         ItemMap itemMap = new ItemMap(mob.zone, ConstItem.CHU_AN, 1, x, yEnd, player.id);
                         itemMap.options.add(new ItemOption(74, 0));
                         list.add(itemMap);
                     }
                 } else if (MapService.gI().isMapDoanhTrai(mapid)) {
-                    if (Util.isTrue(1, 30)) {
+                    if (Util.isTrueDrop(1, 30, player)) {
                         ItemMap itemMap = new ItemMap(mob.zone, ConstItem.CHU_KHAI, 1, x, yEnd, player.id);
                         itemMap.options.add(new ItemOption(74, 0));
                         list.add(itemMap);
                     }
                 } else if (MapService.gI().isMapBanDoKhoBau(mapid)) {
-                    if (Util.isTrue(1, 30)) {
+                    if (Util.isTrueDrop(1, 30, player)) {
                         ItemMap itemMap = new ItemMap(mob.zone, ConstItem.CHU_PHONG, 1, x, yEnd, player.id);
                         itemMap.options.add(new ItemOption(74, 0));
                         list.add(itemMap);
                     }
                 }
-                // rừng nguyên thủy
+                if (mapid >= 165 && mapid <= 167) {
+                    ItemMap itemMap = new ItemMap(mob.zone,
+                            Util.nextInt(CombineServiceNew.KHAM_DA_CUONG_HOA_ITEM_SD_ID,
+                                    CombineServiceNew.KHAM_DA_CUONG_HOA_ITEM_KI_ID),
+                            1,
+                            x, yEnd, player.id);
+                    list.add(itemMap);
+                }
                 if (mapid >= 160 && mapid <= 163) {
-                    if (Util.isTrue(1, 1000)) {
+                    if (Util.isTrueDrop(1, 1000, player)) {
                         ItemMap itemMap = new ItemMap(mob.zone,
                                 Util.nextInt(ConstItem.MANH_AO, ConstItem.MANH_GANG_TAY), 1,
                                 x, yEnd, player.id);
@@ -312,24 +351,25 @@ public class RewardService {
                 if (mapid == 153) {// map bang
                     int numMenber = player.zone.getPlayersSameClan(player.clan.id).size();
                     if (numMenber >= 2) {
-                        if (Util.isTrue(1, 500)) {
+                        if (Util.isTrueDrop(1, 500, player)) {
                             player.clanMember.memberPoint++;
                             Service.getInstance().sendThongBao(player, "Bạn nhận được capsule bang hội");
                         }
                     }
                 }
 
-                if (mapid >= 168 && mapid <= 171 && Util.isTrue(1, 100)) {
+                if (mapid >= 168 && mapid <= 171 && Util.isTrueDrop(1, 100, player)) {
                     list.add(new ItemMap(mob.zone, 2150, 1, x, yEnd, player.id));
                 }
                 // BDKB
-                if (mapid >= 135 && mapid <= 138 && Util.isTrue(50, 100)) {
+                if (mapid >= 135 && mapid <= 138 && Util.isTrueDrop(10, 100, player)) {
                     int soluong = 1;
                     list.add(new ItemMap(mob.zone, 934, soluong, x, yEnd, player.id));
                 }
             }
         }
         return list;
+
     }
 
     private void initQuantityGold(ItemMap item) {
@@ -1127,34 +1167,89 @@ public class RewardService {
 
     }
 
-    // set kích hoạt
-    public void initActivationOption(int gender, int type, List<ItemOption> list) {
-        if (type <= 4) {
-            int[] idOption;
-            if (gender == 0) {
-                if (Util.isTrue(80, 100)) {
-                    idOption = ACTIVATION_SET[gender][Util.nextInt(1, 2)];
-                } else {
-                    idOption = ACTIVATION_SET[gender][0];
-                }
-            } else if (gender == 1) {
-                if (Util.isTrue(80, 100)) {
-                    idOption = ACTIVATION_SET[gender][1];
-                } else {
-                    idOption = ACTIVATION_SET[gender][Util.nextInt(0, 2)];
-                }
-            } else {
-                if (Util.isTrue(90, 100)) {
-                    idOption = ACTIVATION_SET[gender][Util.nextInt(1, 2)];
-                } else {
-                    idOption = ACTIVATION_SET[gender][1];
-                }
-            }
+    // ==================== SET KÍCH HOẠT ====================
 
-            list.add(new ItemOption(idOption[0], 1)); // tên set
-            list.add(new ItemOption(idOption[1], 100)); // hiệu ứng set
-            list.add(new ItemOption(30, 0)); // không thể giao dịch
-            list.add(new ItemOption(73, 0));
+    // Tỉ lệ random set theo chủng tộc
+    private static final int TRAI_DAT_RARE_CHANCE = 80; // 80% ra set hiếm (Thiên Xin Hàng/Kirin)
+    private static final int NAMEK_RARE_CHANCE = 80; // 80% ra Pikkoro Daimao
+    private static final int XAYDA_RARE_CHANCE = 80; // 80% ra set hiếm (Cadic/Nappa)
+
+    // Index set trong ActivationSetData
+    // Trái Đất: 0=Songoku, 1=Thiên Xin Hàng, 2=Kirin
+    // Namek: 0=Ốc Tiêu, 1=Pikkoro Daimao, 2=Picolo
+    // Xayda: 0=Kakarot, 1=Cadic, 2=Nappa
+
+    /**
+     * Khởi tạo option set kích hoạt cho item
+     * 
+     * @param gender Chủng tộc (0=Trái Đất, 1=Namek, 2=Xayda)
+     * @param type   Loại item (chỉ áp dụng cho type <= 4)
+     * @param list   Danh sách option để thêm vào
+     */
+    public void initActivationOption(int gender, int type, List<ItemOption> list) {
+        if (type > 4) {
+            return;
+        }
+
+        ActivationSetData setData = randomActivationSet(gender);
+        if (setData == null) {
+            return;
+        }
+
+        list.add(new ItemOption(setData.getOptionId(), 1)); // Tên set
+        list.add(new ItemOption(setData.getEffectId(), 100)); // Hiệu ứng set
+        list.add(new ItemOption(30, 0)); // Không thể giao dịch
+        list.add(new ItemOption(73, 0)); // Khóa item
+    }
+
+    /**
+     * Random set kích hoạt theo chủng tộc với tỉ lệ riêng
+     */
+    private ActivationSetData randomActivationSet(int gender) {
+        return switch (gender) {
+            case ActivationSetData.GENDER_TRAI_DAT -> randomTraiDatSet();
+            case ActivationSetData.GENDER_NAMEK -> randomNamekSet();
+            case ActivationSetData.GENDER_XAYDA -> randomXaydaSet();
+            default -> null;
+        };
+    }
+
+    /**
+     * Trái Đất: 80% ra Thiên Xin Hàng hoặc Kirin, 20% ra Songoku
+     */
+    private ActivationSetData randomTraiDatSet() {
+        if (Util.isTrue(TRAI_DAT_RARE_CHANCE, 100)) {
+            // 80%: Random Thiên Xin Hàng (1) hoặc Kirin (2)
+            return ActivationSetData.get(ActivationSetData.GENDER_TRAI_DAT, Util.nextInt(1, 2));
+        } else {
+            // 20%: Songoku (0)
+            return ActivationSetData.get(ActivationSetData.GENDER_TRAI_DAT, 0);
+        }
+    }
+
+    /**
+     * Namek: 80% ra Pikkoro Daimao, 20% ra random cả 3
+     */
+    private ActivationSetData randomNamekSet() {
+        if (Util.isTrue(NAMEK_RARE_CHANCE, 100)) {
+            // 80%: Pikkoro Daimao (1)
+            return ActivationSetData.get(ActivationSetData.GENDER_NAMEK, Util.nextInt(0, 1));
+        } else {
+            // 20%: Random Ốc Tiêu (0), Pikkoro Daimao (1), Picolo (2)
+            return ActivationSetData.get(ActivationSetData.GENDER_NAMEK, 2);
+        }
+    }
+
+    /**
+     * Xayda: 90% ra Cadic hoặc Nappa, 10% ra Cadic
+     */
+    private ActivationSetData randomXaydaSet() {
+        if (Util.isTrue(XAYDA_RARE_CHANCE, 100)) {
+            // 90%: Random Cadic (1) hoặc Nappa (2)
+            return ActivationSetData.get(ActivationSetData.GENDER_XAYDA, Util.nextInt(1, 2));
+        } else {
+            // 10%: Cadic (1)
+            return ActivationSetData.get(ActivationSetData.GENDER_XAYDA, 0);
         }
     }
 

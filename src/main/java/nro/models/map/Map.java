@@ -294,4 +294,26 @@ public class Map implements Runnable {
     public void removeZone(Zone z) {
         zones.remove(z);
     }
+
+    /**
+     * Updates all zones in this map during a game loop tick.
+     * Called by GameLoop to synchronize zone updates.
+     */
+    public void update() {
+        try {
+            if (zones != null) {
+                for (Zone zone : zones) {
+                    try {
+                        if (zone != null) {
+                            zone.update();
+                        }
+                    } catch (Exception e) {
+                        nro.utils.Log.error(Map.class, e, "Error updating zone in map: " + this.mapName);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            nro.utils.Log.error(Map.class, e, "Error in map update: " + this.mapName);
+        }
+    }
 }

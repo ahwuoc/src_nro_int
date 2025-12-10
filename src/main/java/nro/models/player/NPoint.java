@@ -381,12 +381,6 @@ public class NPoint {
             }
         }
         List<Item> itemsBody = player.inventory.itemsBody;
-        // if (!player.isBoss && !player.isMiniPet) {
-        // Item pants = itemsBody.get(1);
-        // if (pants.isNotNullItem() && pants.getId() >= 691 && pants.getId() >= 693) {
-        // player.event.setUseQuanHoa(true);
-        // }
-        // }
         if (Manager.EVENT_SEVER == 3) {
             if (!this.player.isBoss && !this.player.isMiniPet) {
                 if (itemsBody.get(5).isNotNullItem()) {
@@ -438,43 +432,8 @@ public class NPoint {
             }
         }
 
-        if ((!this.player.isPet && !this.player.isMiniPet && !this.player.isBoss)
-                && this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            for (Item item : this.player.inventory.itemsBag) {
-                if (item.isNotNullItem() && item.template.id == 921) {
-                    for (ItemOption io : item.itemOptions) {
-                        switch (io.optionTemplate.id) {
-                            case 14: // Chí mạng+#%
-                                this.critAdd += io.param;
-                                break;
-                            case 50: // Sức đánh+#%
-                                this.tlDame.add(io.param);
-                                break;
-                            case 77: // HP+#%
-                                this.tlHp.add(io.param);
-                                break;
-                            case 80: // HP+#%/30s
-                                this.tlHpHoi += io.param;
-                                break;
-                            case 81: // MP+#%/30s
-                                this.tlMpHoi += io.param;
-                                break;
-                            case 94: // Giáp #%
-                                this.tlDef.add(io.param);
-                                break;
-                            case 103: // KI +#%
-                                this.tlMp.add(io.param);
-                                break;
-                            case 108: // #% Né đòn
-                                this.tlNeDon += io.param;
-                                break;
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-
+        applyBongTaiPorataBonus();
+        
         setDameTrainArmor();
         setBasePoint();
     }
@@ -513,6 +472,94 @@ public class NPoint {
         }
     }
 
+    // Danh sách ID item được buff khi hợp thể Porata (có thể thêm nhiều ID)
+    private static final int[] PORATA_BONUS_ITEM_IDS = {921}; // 921 = Bông Tai Porata
+    
+    /**
+     * Áp dụng bonus chỉ số từ các item đặc biệt khi player đang hợp thể
+     */
+    private void applyBongTaiPorataBonus() {
+        if (!isValidPlayerForBonus()) {
+            return;
+        }
+        if (!isInPorataFusion()) {
+            return;
+        }
+        
+        Item bonusItem = findPorataBonusItem();
+        if (bonusItem == null) {
+            return;
+        }
+        
+        applyItemOptions(bonusItem);
+    }
+    
+    private boolean isValidPlayerForBonus() {
+        return !this.player.isPet && !this.player.isMiniPet && !this.player.isBoss;
+    }
+    
+    private boolean isInPorataFusion() {
+        return this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA 
+            || this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2;
+    }
+    
+    private Item findPorataBonusItem() {
+        for (Item item : this.player.inventory.itemsBag) {
+            if (item.isNotNullItem() && isPorataBonusItem(item.template.id)) {
+                return item;
+            }
+        }
+        return null;
+    }
+    
+    private boolean isPorataBonusItem(int itemId) {
+        for (int id : PORATA_BONUS_ITEM_IDS) {
+            if (id == itemId) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private void applyItemOptions(Item item) {
+        for (ItemOption io : item.itemOptions) {
+            switch (io.optionTemplate.id) {
+                case 14:  // Chí mạng +#%
+                    this.critAdd += io.param;
+                    break;
+                case 50:  // Sức đánh +#%
+                    this.tlDame.add(io.param);
+                    break;
+                case 77:  // HP +#%
+                    this.tlHp.add(io.param);
+                    break;
+                case 80:  // HP hồi +#%/30s
+                    this.tlHpHoi += io.param;
+                    break;
+                case 81:  // MP hồi +#%/30s
+                    this.tlMpHoi += io.param;
+                    break;
+                case 94:  // Giáp +#%
+                    this.tlDef.add(io.param);
+                    break;
+                case 103: // KI +#%
+                    this.tlMp.add(io.param);
+                    break;
+                case 108: // Né đòn +#%
+                    this.tlNeDon += io.param;
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Lấy % bonus Porata cho đệ VIP (HP, MP, Dame dùng chung)
+     */
+    private int getPetPorataBonus() {
+        if (!this.player.isPet) return 0;
+        return ((Pet) this.player).getPorataBonus();
+    }
+
     private void setHpHoi() {
         this.hpHoi = (int) calPercent(this.hpMax, 1);
         this.hpHoi += this.hpHoiAdd;
@@ -539,6 +586,15 @@ public class NPoint {
         // đồ
         for (Integer tl : this.tlHp) {
             this.hpMax += calPercent(this.hpMax, tl);
+        }
+        
+        // Bonus HP từ level pet
+        if (this.player.isPet) {
+            Pet pet = (Pet) this.player;
+            int bonusPercent = pet.getBonusPercent();
+            if (bonusPercent > 0) {
+                this.hpMax += calPercent(this.hpMax, bonusPercent);
+            }
         }
 
         if (player.DH1) {
@@ -586,45 +642,8 @@ public class NPoint {
                 && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             this.hpMax += calPercent(this.hpMax, 10);
         }
-        /// Đệ vip
-        if (this.player.isPet && ((Pet) this.player).isBulo
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.hpMax += calPercent(this.hpMax, 20);
-        }
-        if (this.player.isPet && ((Pet) this.player).isCellBao
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.hpMax += calPercent(this.hpMax, 40);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBillNhi
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.hpMax += calPercent(this.hpMax, 30);
-        }
-        if (this.player.isPet && ((Pet) this.player).isFideTrau
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.hpMax += calPercent(this.hpMax, 30);
-        }
-        /// end
-        // bông tai cấp 1
-        if (this.player.isPet && ((Pet) this.player).isMabu
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.hpMax += calPercent(this.hpMax, 10);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBulo
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.hpMax += calPercent(this.hpMax, 20);
-        }
-        if (this.player.isPet && ((Pet) this.player).isCellBao
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.hpMax += calPercent(this.hpMax, 40);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBillNhi
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.hpMax += calPercent(this.hpMax, 30);
-        }
-        if (this.player.isPet && ((Pet) this.player).isFideTrau
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.hpMax += calPercent(this.hpMax, 30);
-        }
+        // Bonus HP cho đệ VIP khi hợp thể Porata (cấp 1 và cấp 2)
+        this.hpMax += calPercent(this.hpMax, getPetPorataBonus());
         // phù
         if (this.player.zone != null && MapService.gI().isMapBlackBallWar(this.player.zone.map.mapId)) {
             this.hpMax *= this.player.effectSkin.xHPKI;
@@ -649,7 +668,7 @@ public class NPoint {
         if (this.player.itemTime != null && this.player.itemTime.isUseBoHuyet2) {
             this.hpMax += calPercent(hpMax, 120);
         }
-        if (this.player.zone != null && MapService.gI().isMapCold(this.player.zone.map)
+        if (this.player.zone != null && MapService.gI().isMapCold(this.player.zone.map.mapId)
                 && !this.isKhongLanh) {
             this.hpMax /= 2;
         }
@@ -669,8 +688,6 @@ public class NPoint {
         }
     }
 
-    // (hp sư phụ + hp đệ tử ) + 15%
-    // (hp sư phụ + 15% +hp đệ tử)
     private void setHp() {
         if (this.hp > this.hpMax) {
             this.hp = this.hpMax;
@@ -684,6 +701,16 @@ public class NPoint {
         for (Integer tl : this.tlMp) {
             this.mpMax += calPercent(this.mpMax, tl);
         }
+        
+        // Bonus MP từ level pet
+        if (this.player.isPet) {
+            Pet pet = (Pet) this.player;
+            int bonusPercent = pet.getBonusPercent();
+            if (bonusPercent > 0) {
+                this.mpMax += calPercent(this.mpMax, bonusPercent);
+            }
+        }
+        
         if (this.player.setClothes.picolo == 5) {
             this.mpMax *= 3;
         }
@@ -715,53 +742,14 @@ public class NPoint {
         if (player.DH5) {
             this.mpMax += calPercent(this.mpMax, player.ChiSoKI_5);
         }
-        // pet mabư
-        if (this.player.isPet && ((Pet) this.player).isMabu
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.mpMax += calPercent(this.mpMax, 10);
-        }
-        /// đệ vip
-        if (this.player.isPet && ((Pet) this.player).isBulo
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.mpMax += calPercent(this.mpMax, 20);
-        }
-        if (this.player.isPet && ((Pet) this.player).isCellBao
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.mpMax += calPercent(this.mpMax, 40);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBillNhi
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.mpMax += calPercent(this.mpMax, 30);
-        }
-        if (this.player.isPet && ((Pet) this.player).isFideTrau
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.mpMax += calPercent(this.mpMax, 30);
-        }
-        /// end
-        if (this.player.isPet && ((Pet) this.player).isMabu
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.mpMax += calPercent(this.mpMax, 10);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBulo
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.mpMax += calPercent(this.mpMax, 20);
-        }
-        if (this.player.isPet && ((Pet) this.player).isCellBao
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.mpMax += calPercent(this.mpMax, 40);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBillNhi
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.mpMax += calPercent(this.mpMax, 30);
-        }
-        if (this.player.isPet && ((Pet) this.player).isFideTrau
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.mpMax += calPercent(this.mpMax, 30);
-        }
+        // Bonus MP cho đệ VIP khi hợp thể Porata (cấp 1 và cấp 2)
+        this.mpMax += calPercent(this.mpMax, getPetPorataBonus());
         // hợp thể
         if (this.player.fusion.typeFusion != 0) {
             this.mpMax += this.player.pet.nPoint.mpMax;
         }
+
+        // them vao day
         // bổ khí
         if (this.player.itemTime != null && this.player.itemTime.isUseBoKhi) {
             this.mpMax *= 2;
@@ -820,6 +808,16 @@ public class NPoint {
         for (Integer tl : this.tlSDDep) {
             this.dame += calPercent(this.dame, tl);
         }
+        
+        // Bonus Dame từ level pet
+        if (this.player.isPet) {
+            Pet pet = (Pet) this.player;
+            int bonusPercent = pet.getBonusPercent();
+            if (bonusPercent > 0) {
+                this.dame += calPercent(this.dame, bonusPercent);
+            }
+        }
+        
         if (player.DH1) {
             this.dame += calPercent(this.dame, player.ChiSoSD_1);
         }
@@ -843,49 +841,8 @@ public class NPoint {
                 this.dame += calPercent(this.dame, percent);
             }
         }
-        // pet mabư
-        if (this.player.isPet && ((Pet) this.player).isMabu
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.dame += calPercent(this.dame, 10);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBulo
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.dame += calPercent(this.dame, 20);
-        }
-        if (this.player.isPet && ((Pet) this.player).isCellBao
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.dame += calPercent(this.dame, 40);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBillNhi
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.dame += calPercent(this.dame, 30);
-        }
-        if (this.player.isPet && ((Pet) this.player).isFideTrau
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.dame += calPercent(this.dame, 30);
-        }
-        // end
-        /// bong tai 1
-        if (this.player.isPet && ((Pet) this.player).isMabu
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.dame += calPercent(this.dame, 10);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBulo
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.dame += calPercent(this.dame, 20);
-        }
-        if (this.player.isPet && ((Pet) this.player).isCellBao
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.dame += calPercent(this.dame, 40);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBillNhi
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.dame += calPercent(this.dame, 30);
-        }
-        if (this.player.isPet && ((Pet) this.player).isFideTrau
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.dame += calPercent(this.dame, 30);
-        }
+        // Bonus Dame cho đệ VIP khi hợp thể Porata (cấp 1 và cấp 2)
+        this.dame += calPercent(this.dame, getPetPorataBonus());
         // thức ăn
         if (!this.player.isPet && this.player.itemTime.isEatMeal
                 || this.player.isPet && ((Pet) this.player).master.itemTime.isEatMeal) {
@@ -906,7 +863,7 @@ public class NPoint {
         // giảm dame
         this.dame -= calPercent(this.dame, tlSubSD);
         // map cold
-        if (this.player.zone != null && MapService.gI().isMapCold(this.player.zone.map)
+        if (this.player.zone != null && MapService.gI().isMapCold(this.player.zone.map.mapId)
                 && !this.isKhongLanh) {
             this.dame /= 2;
         }
@@ -964,10 +921,10 @@ public class NPoint {
             this.crit = 110;
 
         }
-        /// SET BIEN HINH CM VE MAT DINH
-        if (this.player.effectSkill.isBienHinh) {
-            this.crit = 0 + this.critg + this.critAdd;
-        }
+        // /// SET BIEN HINH CM VE MAT DINH
+        // if (this.player.effectSkill.isBienHinh) {
+        //     this.crit = 0 + this.critg + this.critAdd;
+        // }
         if (player.getBuff() == Buff.BUFF_CRIT) {
             crit += 10;
         }
@@ -1290,6 +1247,9 @@ public class NPoint {
             for (Integer tl : this.tlTNSM) {
                 tiemNang += calPercent(tiemNang, tl);
             }
+            if (this.player.getSession() != null && this.player.getSession().level_vip == 3) {
+                tiemNang += calPercent(tiemNang, 30);
+            }
             if (this.player.cFlag != 0) {
                 if (this.player.cFlag == 8) {
                     tiemNang += calPercent(tiemNang, 10);
@@ -1394,7 +1354,7 @@ public class NPoint {
         if (powerLimit != null) {
             return powerLimit.getPower();
         }
-        return 0;
+        return 1;
     }
 
     public long getPowerNextLimit() {
@@ -1402,7 +1362,7 @@ public class NPoint {
         if (powerLimit != null) {
             return powerLimit.getPower();
         }
-        return 0;
+        return 1;
     }
 
     // **************************************************************************

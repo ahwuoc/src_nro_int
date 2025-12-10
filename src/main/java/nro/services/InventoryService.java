@@ -74,15 +74,6 @@ public class InventoryService {
         if (ItemMapService.gI().isBlackBall(item.template.id)) {
             return BlackBallWar.gI().pickBlackBall(player, item);
         }
-
-        // quả trứng
-        if (item.template.id == 568) {
-            if (player.mabuEgg == null) {
-                MabuEgg.createMabuEgg(player);
-            }
-            return true;
-        }
-
         // tennis spaceship
         if (item.template.id == 453) {
             player.haveTennisSpaceShip = true;

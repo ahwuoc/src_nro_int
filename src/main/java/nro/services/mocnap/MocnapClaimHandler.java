@@ -1,21 +1,20 @@
 package nro.services.mocnap;
 
-import nro.login.LoginSession;
-import nro.models.item.Item;
+import nro.jdbc.DBService;
 import nro.models.item.ItemOption;
 import nro.models.player.Player;
-import nro.server.ServerManager;
 import nro.services.InventoryService;
 import nro.services.ItemService;
 import nro.services.Service;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
- * Service xử lý claim rewards mốc nạp
- * 
- * @author 💖 YTB ahwuocdz 💖
+ * Handler xử lý claim mốc nạp
  */
 public class MocnapClaimHandler {
-
     private static MocnapClaimHandler instance;
 
     public static MocnapClaimHandler gI() {
@@ -26,60 +25,101 @@ public class MocnapClaimHandler {
     }
 
     /**
-     * Xử lý nhận thưởng mốc nạp
+     * Claim mốc nạp
      */
     public void claimMilestone(Player player, MocnapService.MocnapMilestone milestone) {
         try {
-            // 1. Kiểm tra điều kiện
+            // Check xem player đã claim chưa
+            if (isAlreadyClaimed((int) player.id, milestone.id)) {
+                Service.getInstance().sendThongBao(player, "Bạn đã nhận phần thưởng này rồi");
+                return;
+            }
+
+            // Check xem player có đủ điều kiện không
             int totalRecharge = Service.CheckMocNap(player, 0) ? player.getSession().tongnap : 0;
-            int claimedFlags = player.event.getMocNapDaNhan();
-            boolean claimed = (claimedFlags & (1 << milestone.id)) != 0;
-            boolean canClaim = totalRecharge >= milestone.require && !claimed;
-
-            if (!canClaim) {
-                Service.getInstance().sendThongBao(player, "Bạn chưa đủ điều kiện hoặc đã nhận thưởng này rồi");
+            if (totalRecharge < milestone.require) {
+                Service.getInstance().sendThongBao(player, "Bạn chưa đủ điều kiện nhận thưởng");
                 return;
             }
 
-            // 2. Kiểm tra hành trang
-            int totalItems = milestone.items.size();
-            if (InventoryService.gI().getCountEmptyBag(player) < totalItems) {
-                Service.getInstance().sendThongBao(player,
-                        "Hành trang không đủ chỗ trống (cần " + totalItems + " ô)");
-                return;
-            }
-
-            // 3. Gọi Rust server để mark claimed
-            LoginSession loginSession = ServerManager.gI().getLogin();
-            if (loginSession == null || !loginSession.isConnected()) {
-                Service.getInstance().sendThongBao(player, "Lỗi kết nối login server");
-                return;
-            }
-
-            boolean marked = loginSession.getService().markMilestoneClaimed(
-                    player.getSession().userId,
-                    milestone.id,
-                    3000);
-
-            if (!marked) {
-                Service.getInstance().sendThongBao(player, "Lỗi lưu dữ liệu, vui lòng thử lại");
-                return;
-            }
-            for (MocnapService.MocnapItem mocnapItem : milestone.items) {
-                Item item = ItemService.gI().createNewItem((short) mocnapItem.itemId, mocnapItem.quantity);
-                item.itemOptions.clear();
+            // Add items thưởng vào bag
+            for (MocnapService.MocnapItem mocnapItem : milestone.rewards) {
+                nro.models.item.Item item = ItemService.gI().createNewItem((short)mocnapItem.itemId, mocnapItem.quantity);
+                
+                // Add options
                 for (MocnapService.MocnapOption opt : mocnapItem.options) {
                     item.itemOptions.add(new ItemOption(opt.id, opt.param));
                 }
-                InventoryService.gI().addItemBag(player, item, 0);
+                
+                InventoryService.gI().addItemBag(player, item, 99);
             }
-            player.event.setMocNapDaNhan(claimedFlags | (1 << milestone.id));
-            Service.getInstance().sendThongBao(player, "Nhận thưởng " + milestone.title + " thành công!");
+
+            // Lưu vào database
+            saveClaim((int) player.id, milestone.id);
+
+            // Send thông báo
             InventoryService.gI().sendItemBags(player);
-            System.out.println("[MocnapClaimHandler] Player " + player.name + " claimed milestone " + milestone.id);
+            Service.getInstance().sendThongBao(player, "Nhận thưởng thành công");
+            
+            // Refresh menu
+            MocnapMenuService.gI().showMainMenu(player);
         } catch (Exception e) {
             e.printStackTrace();
             Service.getInstance().sendThongBao(player, "Lỗi nhận thưởng");
         }
+    }
+
+    /**
+     * Check xem player đã claim mốc này chưa
+     */
+    private boolean isAlreadyClaimed(int playerId, int mocnapId) {
+        try (Connection conn = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT id FROM mocnap_claimed WHERE player_id = ? AND mocnap_id = ?")) {
+            ps.setInt(1, playerId);
+            ps.setInt(2, mocnapId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Lưu claim vào database
+     */
+    private void saveClaim(int playerId, int mocnapId) {
+        try (Connection conn = DBService.gI().getConnectionForSaveData();
+             PreparedStatement ps = conn.prepareStatement(
+                     "INSERT INTO mocnap_claimed (player_id, mocnap_id) VALUES (?, ?)")) {
+            ps.setInt(1, playerId);
+            ps.setInt(2, mocnapId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Lấy danh sách mốc đã claim
+     */
+    public int getClaimedFlags(int playerId) {
+        int flags = 0;
+        try (Connection conn = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT mocnap_id FROM mocnap_claimed WHERE player_id = ?")) {
+            ps.setInt(1, playerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int mocnapId = rs.getInt("mocnap_id");
+                    flags |= (1 << mocnapId);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return flags;
     }
 }

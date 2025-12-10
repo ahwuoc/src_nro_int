@@ -115,7 +115,7 @@ public class Mob {
                 MobService.gI().sendMobStillAliveAffterAttacked(this, damage, plAtt != null ? plAtt.nPoint.isCrit : false);
             }
             if (plAtt != null) {
-                Service.getInstance().addSMTN(plAtt, (byte) 2, getTiemNangForPlayer(plAtt, damage), true);
+                Service.getInstance().add_TNSM(plAtt, (byte) 2, getTiemNangForPlayer(plAtt, damage), true);
             }
         }
     }
@@ -203,11 +203,6 @@ public class Mob {
     public Player getPlayerCanAttack() {
         int distance = 500;
         Player plAttack = null;
-//        Player plAttack = zone.findPlayerByID(targetID);
-//        int dis = Util.getDistance(plAttack, this);
-//        if (plAttack != null && dis <= distance) {
-//            return plAttack;
-//        }
         distance = 100;
         try {
             List<Player> players = this.zone.getNotBosses();

@@ -12,6 +12,8 @@ import nro.models.player.Player;
 import nro.server.io.Message;
 import nro.utils.Log;
 import nro.utils.Util;
+import nro.ahwuocdz.DungeonInstance;
+import nro.ahwuocdz.DungeonManage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +71,14 @@ public class MobService {
             Service.getInstance().sendMessAllPlayerInMap(mob.zone, msg);
             msg.cleanup();
             hutItem(plKill, items);
+            
+            // Check if mob is from dungeon and notify kill (chỉ tính khi ở map dungeon)
+            if (plKill.zone != null && plKill.zone.map.mapId == DungeonManage.MAP_ID) {
+                DungeonInstance dungeon = DungeonManage.gI().getPlayerInstance(plKill);
+                if (dungeon != null && dungeon.isMobFromThisInstance(mob.id)) {
+                    dungeon.onMobKilled();
+                }
+            }
         } catch (Exception e) {
             // Logger.logException(MobService.class, e);
             e.printStackTrace();

@@ -600,7 +600,7 @@ public class SummonDragon {
                         break;
                     case 2: // +200 tr smtn
                         if (false) {
-                            Service.getInstance().addSMTN(this.playerSummonShenron, (byte) 2, 200000000, false);
+                            Service.getInstance().add_TNSM(this.playerSummonShenron, (byte) 2, 200000000, false);
                         } else {
                             Service.getInstance().sendThongBao(playerSummonShenron,
                                     "Xin lỗi, điều ước này khó quá, ta không thể thực hiện.");
@@ -661,7 +661,7 @@ public class SummonDragon {
                         break;
                     case 1: // +20 tr smtn
                         if (false) {
-                            Service.getInstance().addSMTN(this.playerSummonShenron, (byte) 2, 20000000, false);
+                            Service.getInstance().add_TNSM(this.playerSummonShenron, (byte) 2, 20000000, false);
                         } else {
                             Service.getInstance().sendThongBao(playerSummonShenron,
                                     "Xin lỗi, điều ước này khó quá, ta không thể thực hiện.");
@@ -684,7 +684,7 @@ public class SummonDragon {
                         break;
                     case 1: // +2 tr smtn
                         if (false) {
-                            Service.getInstance().addSMTN(this.playerSummonShenron, (byte) 2, 2000000, false);
+                            Service.getInstance().add_TNSM(this.playerSummonShenron, (byte) 2, 2000000, false);
                         } else {
                             Service.getInstance().sendThongBao(playerSummonShenron,
                                     "Xin lỗi, điều ước này khó quá, ta không thể thực hiện.");

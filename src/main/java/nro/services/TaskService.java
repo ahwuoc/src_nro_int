@@ -18,7 +18,6 @@ import nro.server.Manager;
 import nro.server.io.Message;
 import nro.utils.Log;
 import nro.utils.Util;
-import nro.consts.*;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -26,17 +25,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import nro.jdbc.DBService;
 import nro.jdbc.daos.PlayerDAO;
-import nro.models.boss.BossData;
-import nro.models.boss.BossManager;
-import nro.models.boss.mapoffline.Boss_Tau77;
-import nro.models.boss.mapoffline.Boss_ThanMeo;
 import static nro.models.item.ItemTime.TEXT_NHIEM_VU_HANG_NGAY;
-import nro.models.npc.NpcFactory;
 
 /**
  * @author 💖 ahwuocdz 💖
@@ -114,6 +105,13 @@ public class TaskService {
     public void sendBackTaskMain(Player player) {
         rewardDoneTask(player);
         player.playerTask.taskMain = TaskService.gI().getTaskMainById(player, player.playerTask.taskMain.id - 1);
+        sendTaskMain(player);
+        Service.getInstance().sendThongBao(player, "Nhiệm vụ tiếp theo của bạn là "
+                + player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).name);
+    }
+
+    public void changeTask(Player player, int taskId) {
+        player.playerTask.taskMain = TaskService.gI().getTaskMainById(player, taskId);
         sendTaskMain(player);
         Service.getInstance().sendThongBao(player, "Nhiệm vụ tiếp theo của bạn là "
                 + player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).name);
@@ -212,7 +210,8 @@ public class TaskService {
                         || doneTask(player, ConstTask.TASK_11_1)
                         || doneTask(player, ConstTask.TASK_24_0));
             case ConstNpc.BO_MONG:
-                return (doneTask(player, ConstTask.TASK_9_0)
+                return (doneTask(player, ConstTask.TASK_8_6)
+                        || doneTask(player, ConstTask.TASK_9_0)
                         || doneTask(player, ConstTask.TASK_10_2));
             case ConstNpc.DR_DRIEF:
             case ConstNpc.CARGO:
@@ -282,10 +281,10 @@ public class TaskService {
             if (power >= 5000000) {
                 doneTask(player, ConstTask.TASK_18_0);
             }
-            if (power >= 50000000) {
+            if (power >= 50_000_000) {
                 doneTask(player, ConstTask.TASK_20_0);
             }
-            if (power >= 15000000) {
+            if (power >= 15_000_000) {
                 doneTask(player, ConstTask.TASK_19_0);
             }
         }
@@ -426,7 +425,7 @@ public class TaskService {
                     doneTask(player, ConstTask.TASK_23_1);
                     break;
                 case BossFactory.FIDE_DAI_CA_3:
-                    doneTask(player, ConstTask.TASK_23_2); //
+                    doneTask(player, ConstTask.TASK_23_2); 
                     break;
                 case BossFactory.ANDROID_19:
                     doneTask(player, ConstTask.TASK_25_1);
@@ -495,8 +494,12 @@ public class TaskService {
         }
     }
 
-    // kiểm tra hoàn thành nhiệm vụ khi giết được quái
     public void checkDoneTaskKillMob(Player player, Mob mob) {
+        // Kiểm tra nhiệm vụ đệ tử (chỉ tính khi pet giết quái)
+        if (player.isPet) {
+            nro.services.task.TaskDeTy.gI().onKillMob(player, mob.tempId);
+        }
+        
         if (!player.isBoss && !player.isPet) {
             switch (mob.tempId) {
                 case ConstMob.MOC_NHAN:
@@ -1347,28 +1350,28 @@ public class TaskService {
     private void rewardDoneTask(Player player) {
         switch (player.playerTask.taskMain.id) {
             case 0:
-                Service.getInstance().addSMTN(player, (byte) 0, 500, false);
-                Service.getInstance().addSMTN(player, (byte) 1, 500, false);
+                Service.getInstance().add_TNSM(player, (byte) 0, 500, false);
+                Service.getInstance().add_TNSM(player, (byte) 1, 500, false);
                 break;
             case 1:
-                Service.getInstance().addSMTN(player, (byte) 0, 1000, false);
-                Service.getInstance().addSMTN(player, (byte) 1, 1000, false);
+                Service.getInstance().add_TNSM(player, (byte) 0, 1000, false);
+                Service.getInstance().add_TNSM(player, (byte) 1, 1000, false);
                 break;
             case 2:
-                Service.getInstance().addSMTN(player, (byte) 0, 1200, false);
-                Service.getInstance().addSMTN(player, (byte) 1, 1200, false);
+                Service.getInstance().add_TNSM(player, (byte) 0, 1200, false);
+                Service.getInstance().add_TNSM(player, (byte) 1, 1200, false);
                 break;
             case 3:
-                Service.getInstance().addSMTN(player, (byte) 0, 3000, false);
-                Service.getInstance().addSMTN(player, (byte) 1, 3000, false);
+                Service.getInstance().add_TNSM(player, (byte) 0, 3000, false);
+                Service.getInstance().add_TNSM(player, (byte) 1, 3000, false);
                 break;
             case 4:
-                Service.getInstance().addSMTN(player, (byte) 0, 7000, false);
-                Service.getInstance().addSMTN(player, (byte) 1, 7000, false);
+                Service.getInstance().add_TNSM(player, (byte) 0, 7000, false);
+                Service.getInstance().add_TNSM(player, (byte) 1, 7000, false);
                 break;
             case 5:
-                Service.getInstance().addSMTN(player, (byte) 0, 20000, false);
-                Service.getInstance().addSMTN(player, (byte) 1, 20000, false);
+                Service.getInstance().add_TNSM(player, (byte) 0, 20000, false);
+                Service.getInstance().add_TNSM(player, (byte) 1, 20000, false);
                 break;
         }
     }

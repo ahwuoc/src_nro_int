@@ -20,8 +20,6 @@ public class GauTuongCuop extends BigBoss {
     @Override
     public void attack(Player plll) {
         if (!isDie() && !effectSkill.isHaveEffectSkill() && Util.canDoWithTime(lastBigBossAttackTime, 3000)) {
-            // 10 : di chuyển, 11 - 20 : tấn công, 21 : bay, 22 : ..., 23 : die
-
             if (this.zone.getNotBosses().isEmpty()) {
                 return;
             }

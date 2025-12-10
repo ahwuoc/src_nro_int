@@ -26,11 +26,11 @@ public class Poc extends Boss {
         return false;
     }
 
-     @Override
-     public void rewards(Player pl) {
+    @Override
+    public void rewards(Player pl) {
         /// Rơi vật phẩm
         if (Util.isTrue(1, 50)) {
-            int[] vatpham = {17, 18, 19, 20};
+            int[] vatpham = { 17, 18, 19, 20 };
             int vatphamChon = vatpham[Util.nextInt(0, vatpham.length - 1)];
             int randomvitrix = Util.nextInt(5, 8);
             int xPosition = pl.location.x + randomvitrix;
@@ -39,10 +39,11 @@ public class Poc extends Boss {
             Service.getInstance().dropItemMap(this.zone, itemMap);
             /// Roi vật phẩm noel
         } else if (Util.isTrue(100, 100)) {
-              
+
             /// Nv
-            TaskService.gI().checkDoneTaskKillBoss(pl, this);
         }
+        TaskService.gI().checkDoneTaskKillBoss(pl, this);
+
     }
 
     @Override

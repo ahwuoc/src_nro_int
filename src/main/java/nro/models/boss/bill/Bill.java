@@ -32,7 +32,7 @@ public class Bill extends Boss {
         ItemMap itemMap = null;
         int x = this.location.x;
         int y = this.zone.map.yPhysicInTop(x, this.location.y - 24);
-        if (Util.isTrue(10, 100)) {
+        if (Util.isTrueDrop(10, 100, pl)) {
             int[] set1 = { 562, 564, 566, 561 };
             itemMap = new ItemMap(this.zone, set1[Util.nextInt(0, set1.length - 1)], 1, x, y, pl.id);
             RewardService.gI().initBaseOptionClothes(itemMap.itemTemplate.id, itemMap.itemTemplate.type,
@@ -46,7 +46,7 @@ public class Bill extends Boss {
                     new RewardService.RatioStar((byte) 6, 1, 7),
                     new RewardService.RatioStar((byte) 7, 1, 8)
             });
-        } else if (Util.isTrue(10, 100)) {
+        } else if (Util.isTrueDrop(10, 100, pl)) {
             int[] set2 = { 555, 556, 563, 557, 558, 565, 559, 567, 560 };
             itemMap = new ItemMap(this.zone, set2[Util.nextInt(0, set2.length - 1)], 1, x, y, pl.id);
             RewardService.gI().initBaseOptionClothes(itemMap.itemTemplate.id, itemMap.itemTemplate.type,
@@ -61,9 +61,9 @@ public class Bill extends Boss {
                     new RewardService.RatioStar((byte) 7, 1, 8)
             });
 
-        } else if (Util.isTrue(1, 5)) {
+        } else if (Util.isTrueDrop(1, 5, pl)) {
             itemMap = new ItemMap(this.zone, 15, 1, x, y, pl.id);
-        } else if (Util.isTrue(1, 2)) {
+        } else if (Util.isTrueDrop(1, 2, pl)) {
             itemMap = new ItemMap(this.zone, 16, 1, x, y, pl.id);
         }
         if (Manager.EVENT_SEVER == 4 && itemMap == null) {

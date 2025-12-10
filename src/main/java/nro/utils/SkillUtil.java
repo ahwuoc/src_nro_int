@@ -25,7 +25,7 @@ public class SkillUtil {
         nClassXD = Manager.NCLASS.get(2);
     }
 
-    public static int getTimeBienHinh(boolean lastLevel, int coolDown) { // thời gian biến hình
+    public static int getTimeBienHinh(boolean lastLevel, int coolDown) { 
         int per = lastLevel ? 500 : 500;
         return coolDown * per / 100;
     }
@@ -205,7 +205,7 @@ public class SkillUtil {
         }
         skill = new Skill(skill);
         if (index == 1) {
-            skill.coolDown = 1000;
+            skill.coolDown = 500;
         }
         skills.set(index, skill);
         return true;

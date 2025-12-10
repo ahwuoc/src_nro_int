@@ -32,28 +32,23 @@ public class CaptionManager {
     }
 
     public void load() {
-        try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM `caption`");
+        try (java.sql.Connection con = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = con.prepareStatement("SELECT * FROM `caption`")) {
             ResultSet rs = ps.executeQuery();
-            try {
-                while (rs.next()) {
-                    int id = rs.getShort("id");
-                    String earth = rs.getString("earth");
-                    String saiya = rs.getString("saiya");
-                    String namek = rs.getString("namek");
-                    long power = rs.getLong("power");
-                    Caption caption = Caption.builder()
-                            .id(id)
-                            .earth(earth)
-                            .saiya(saiya)
-                            .namek(namek)
-                            .power(power)
-                            .build();
-                    add(caption);
-                }
-            } finally {
-                rs.close();
-                ps.close();
+            while (rs.next()) {
+                int id = rs.getShort("id");
+                String earth = rs.getString("earth");
+                String saiya = rs.getString("saiya");
+                String namek = rs.getString("namek");
+                long power = rs.getLong("power");
+                Caption caption = Caption.builder()
+                        .id(id)
+                        .earth(earth)
+                        .saiya(saiya)
+                        .namek(namek)
+                        .power(power)
+                        .build();
+                add(caption);
             }
         } catch (Exception ex) {
             ex.printStackTrace();

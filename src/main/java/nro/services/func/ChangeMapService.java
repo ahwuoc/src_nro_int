@@ -106,9 +106,17 @@ public class ChangeMapService {
 
     public void changeZone(Player pl, int zoneId) {
         int mapid = pl.zone.map.mapId;
+        
+        // Kiểm tra player đang trong dungeon instance
+        if (!pl.isAdmin() && nro.ahwuocdz.DungeonManage.gI().isPlayerInDungeon(pl)) {
+            Service.getInstance().sendThongBaoOK(pl, "Không thể đổi khu vực khi đang trong Địa Cung!");
+            return;
+        }
+        
         if (!pl.isAdmin() && (MapService.gI().isMapDoanhTrai(mapid)
                 || MapService.gI().isMapBanDoKhoBau(mapid) || MapService.gI().isMapKhiGas(mapid)
                 || mapid == 120 || mapid == 126
+                || mapid == nro.ahwuocdz.DungeonManage.MAP_ID
                 || pl.zone instanceof ZDungeon || MapService.gI().isMapVS(mapid))) {
             Service.getInstance().sendThongBaoOK(pl, "Không thể đổi khu vực trong map này");
             return;
@@ -217,8 +225,8 @@ public class ChangeMapService {
         }
         zoneJoin = checkMapCanJoin(pl, zoneJoin);
         if (zoneJoin != null) {
-            boolean currMapIsCold = MapService.gI().isMapCold(pl.zone.map);
-            boolean nextMapIsCold = MapService.gI().isMapCold(zoneJoin.map);
+            boolean currMapIsCold = MapService.gI().isMapCold(pl.zone.map.mapId);
+            boolean nextMapIsCold = MapService.gI().isMapCold(zoneJoin.map.mapId);
             if (typeSpace == AUTO_SPACE_SHIP) {
                 spaceShipArrive(pl, (byte) 0, pl.haveTennisSpaceShip ? TENNIS_SPACE_SHIP : DEFAULT_SPACE_SHIP);
                 pl.setUseSpaceShip(pl.haveTennisSpaceShip ? TENNIS_SPACE_SHIP : DEFAULT_SPACE_SHIP);

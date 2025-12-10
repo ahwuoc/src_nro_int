@@ -46,7 +46,7 @@ public class PlayerLoader {
     }
 
     /**
-     * Parse JSON object from string
+     * Parse JSON object from string    
      */
     protected JSONObject parseObject(String json) {
         return (JSONObject) jv.parse(json);
@@ -925,6 +925,21 @@ public class PlayerLoader {
             timeBiNgo = getInt(dataArray, 15);
         }
         
+        int timeLucky = 0;
+        if (dataArray.size() >= 17) {
+            timeLucky = getInt(dataArray, 16);
+        }
+        
+        // Buff TNSM x5, x10, x15
+        int timeBuffX5TNSM = 0;
+        int timeBuffX10TNSM = 0;
+        int timeBuffX15TNSM = 0;
+        if (dataArray.size() >= 20) {
+            timeBuffX5TNSM = getInt(dataArray, 17);
+            timeBuffX10TNSM = getInt(dataArray, 18);
+            timeBuffX15TNSM = getInt(dataArray, 19);
+        }
+        
         // Calculate last time usage
         player.itemTime.lastTimeBoHuyet = System.currentTimeMillis() - (ItemTime.TIME_ITEM - timeBoHuyet);
         player.itemTime.lastTimeBoKhi = System.currentTimeMillis() - (ItemTime.TIME_ITEM - timeBoKhi);
@@ -962,6 +977,26 @@ public class PlayerLoader {
         // BiNgo effect
         player.effectSkill.isBiNgo = timeBiNgo != 0;
         player.effectSkill.lastBiNgo = System.currentTimeMillis() - (30_000 - timeBiNgo);
+        
+        // Lucky effect - timeLucky là thời gian còn lại (có thể cộng dồn)
+        player.itemTime.isUseLucky = timeLucky > 0;
+        player.itemTime.luckyTimeRemaining = timeLucky;
+        player.itemTime.lastTimeLucky = System.currentTimeMillis();
+        
+        // Buff x5 TNSM effect
+        player.itemTime.isUseBuffX5TNSM = timeBuffX5TNSM > 0;
+        player.itemTime.buffX5TNSMTimeRemaining = timeBuffX5TNSM;
+        player.itemTime.lastTimeBuffX5TNSM = System.currentTimeMillis();
+        
+        // Buff x10 TNSM effect
+        player.itemTime.isUseBuffX10TNSM = timeBuffX10TNSM > 0;
+        player.itemTime.buffX10TNSMTimeRemaining = timeBuffX10TNSM;
+        player.itemTime.lastTimeBuffX10TNSM = System.currentTimeMillis();
+        
+        // Buff x15 TNSM effect
+        player.itemTime.isUseBuffX15TNSM = timeBuffX15TNSM > 0;
+        player.itemTime.buffX15TNSMTimeRemaining = timeBuffX15TNSM;
+        player.itemTime.lastTimeBuffX15TNSM = System.currentTimeMillis();
     }
 
     // ==================== TASKS & ACHIEVEMENTS ====================
@@ -1113,6 +1148,14 @@ public class PlayerLoader {
         int mp = getInt(data, "mp");
         pet.nPoint.hp = hp;
         pet.nPoint.mp = mp;
+        
+        // Load pet level and exp
+        pet.level = getInt(data, "level");
+        if (pet.level <= 0) {
+            pet.level = 1; // Default level
+        }
+        pet.expLevel = getLong(data, "exp_level");
+        pet.accumulatedExp = getLong(data, "accumulated_exp");
     }
 
     /**
@@ -1146,7 +1189,7 @@ public class PlayerLoader {
                 case Skill.KAMEJOKO:
                 case Skill.MASENKO:
                 case Skill.ANTOMIC:
-                    skill.coolDown = 1000;
+                    skill.coolDown = Pet.PET_SKILL_COOLDOWN;
                     break;
             }
             

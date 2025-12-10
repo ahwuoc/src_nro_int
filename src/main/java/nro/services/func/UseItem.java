@@ -14,12 +14,16 @@ import nro.manager.NamekBallManager;
 import nro.manager.PetFollowManager;
 import nro.models.item.Item;
 import nro.models.item.ItemOption;
+import nro.models.item.ItemTemplate;
+import nro.models.item.ItemTime;
 import nro.models.item.MinipetTemplate;
 import nro.models.map.*;
 import nro.models.map.dungeon.zones.ZSnakeRoad;
 import nro.models.map.war.NamekBallWar;
+import nro.models.npc.specialnpc.MabuEgg;
 import nro.models.player.Inventory;
 import nro.models.player.MiniPet;
+import nro.models.player.Pet;
 import nro.models.player.PetFollow;
 import nro.models.player.Player;
 import nro.models.skill.Skill;
@@ -397,7 +401,6 @@ public class UseItem {
                         hopquanoel(pl, 1, item);
                         break;
                     case 2144:
-                        // Service.gI().sendThongBao(pl, "Chức năng tạm đóng");
                         Skill skill;
                         for (int i = 0; i < pl.playerSkill.skills.size(); i++) {
                             skill = pl.playerSkill.skills.get(i);
@@ -410,14 +413,17 @@ public class UseItem {
                     case 2150:
                         Chuong(pl, item);
                         break;
-                    case 2139:
-                        hopquaHalloween(pl, 1, item);
-                        break;
                     case 2024:
-                        // hopQuaTanThu(pl, item);
+                        hopQuaTanThu(pl, item);
                         break;
                     case 992:
                         nhanthoikhong(pl, item);
+                        break;
+                    case 1519:
+                        long exp = 200;
+                        pl.pet.addExp(exp);
+
+                        InventoryService.gI().subQuantityItemsBag(pl, item, 1);
                         break;
                     case 2023:
                         // Input.gI().createFormTangRuby(pl);
@@ -440,6 +446,22 @@ public class UseItem {
                     case 212: // nho xanh
                         eatGrapes(pl, item);
                         break;
+                    case 1813:
+                        PetService.gI().changeSuperPet(pl, pl.gender, Pet.PetType.SUPER_PICOLO);
+                        InventoryService.gI().subQuantityItemsBag(pl, item, 1);
+                        break;
+                    case 1945:
+                    case 1946:
+                    case 1947:
+                    case 1948:
+                    case 1949:
+                    case 1950:
+                        handle_xu(pl, item);
+                        break;
+                    case 568:
+                        MabuEgg.createMabuEgg(pl);
+                        InventoryService.gI().subQuantityItemsBag(pl, item, 1);
+                        break;
                     case 380: // cskb
                         openCSKB(pl, item);
                         break;
@@ -460,6 +482,10 @@ public class UseItem {
                     case ConstItem.BO_HUYET_2:
                     case ConstItem.GIAP_XEN_BO_HUNG_2:
                     case ConstItem.BO_KHI_2:
+                    case ConstItem.LUCKY_ITEM:
+                    case ConstItem.BUFF_X5_TNSM:
+                    case ConstItem.BUFF_X10_TNSM:
+                    case ConstItem.BUFF_X15_TNSM:
                         useItemTime(pl, item);
                         break;
                     case 521: // tdlt
@@ -472,20 +498,30 @@ public class UseItem {
                         usePorata2(pl);
                         break;
                     case 1280: // bông tai
-                        // NpcService.gI().createMenuConMeo(pl, ConstNpc.HOP_QUA_THAN_LINH, 9840,
-                        // "Đây là hộp quà để giúp các chiến binh trải nghiệm game một cách tốt hơn, Hộp
-                        // quà này chỉ có hiệu lực tại phiên bản Open Test và open sẽ được xóa.",
-                        // "Trái đất", "Namek", "Xayda");
+                        NpcService.gI().createMenuConMeo(
+                                pl,
+                                ConstNpc.HOP_QUA_THAN_LINH,
+                                9840,
+                                "Đây là hộp quà để giúp các chiến binh trải nghiệm game một cách tốt hơn, " +
+                                        "Hộp quà này chỉ có hiệu lực tại phiên bản Open Test và open sẽ được xóa.",
+                                "Trái đất",
+                                "Namek",
+                                "Xayda");
                         break;
                     case 193: // gói 10 viên capsule
                         InventoryService.gI().subQuantityItemsBag(pl, item, 1);
                     case 194: // capsule đặc biệt
                         openCapsuleUI(pl);
                         break;
-                    case 2126: // rada dò boss
-                        showListBoss1(pl, item);
-                        // Service.getInstance().sendThongBao(pl, "Chức năng tạm đóng để đua top nhiệm
-                        // vụ");
+                    case 2061:
+                        NpcService.gI().createMenuConMeo(pl, ConstNpc.MENU_BOSS_LIST, -1, 
+                            "Chọn loại Boss muốn xem:", "Boss Thường", "Boss Broly", "Boss NV", "Đóng");
+                        InventoryService.gI().subQuantityItemsBag(pl, item, 1);
+                            break;
+                    case 2126: 
+                      NpcService.gI().createMenuConMeo(pl, ConstNpc.MENU_BOSS_LIST, -1, 
+                            "Chọn loại Boss muốn xem:", "Boss Thường", "Boss Broly", "Boss NV", "Đóng");
+                        InventoryService.gI().subQuantityItemsBag(pl, item, 1);
                         break;
                     case 401: // đổi đệ tử
                         changePet(pl, item);
@@ -692,7 +728,12 @@ public class UseItem {
     }
 
     private int randClothes(int level) {
-        return ConstItem.LIST_ITEM_CLOTHES[Util.nextInt(0, 2)][Util.nextInt(0, 4)][level - 1];
+        int gender = Util.nextInt(0, 2);
+        int mon = Util.nextInt(0, 4);
+        ItemClothesData.ClothesSet clothes = ItemClothesData.getClothes(gender, mon + 1);
+        if (clothes == null) return 0;
+        int[] arr = clothes.toArray();
+        return arr.length > level - 1 ? arr[level - 1] : 0;
     }
 
     private void openWoodChest(Player pl, Item item) {
@@ -851,7 +892,7 @@ public class UseItem {
         if (player.pet != null) {
             if (player.pet.isMabu) {
                 int gender = player.pet.gender;
-                PetService.gI().changeSuperPet(player, gender, 0);
+                PetService.gI().changeSuperPet(player, gender, Pet.PetType.SAYAN5);
                 InventoryService.gI().subQuantityItemsBag(player, item, 1);
             } else {
                 Service.getInstance().sendThongBao(player, "Yêu Cầu Có Đệ Tử Ma Bư");
@@ -865,69 +906,13 @@ public class UseItem {
         if (player.pet != null) {
             if (player.pet.isMabu) {
                 int gender = player.pet.gender;
-                PetService.gI().changeSuperPet(player, gender, 1);
+                PetService.gI().changeSuperPet(player, gender, Pet.PetType.CELL_BAO);
                 InventoryService.gI().subQuantityItemsBag(player, item, 1);
             } else {
                 Service.getInstance().sendThongBao(player, "Yêu Cầu Có Đệ Tử Ma Bư");
             }
         } else {
             Service.getInstance().sendThongBao(player, "Không thể thực hiện");
-        }
-    }
-
-    private void showListBoss1(Player player, Item item) {
-        final byte OPCODE_SHOW_BOSS_LIST = -96;
-
-        Message msg = null;
-        try {
-            InventoryService.gI().subQuantityItemsBag(player, item, 1);
-
-            msg = new Message(OPCODE_SHOW_BOSS_LIST);
-            msg.writer().writeByte(0);
-            msg.writer().writeUTF("Boss (SL: " + BossManager.BOSSES_IN_GAME.size() + ")");
-
-            // Đếm số boss sống, không phải Yar
-            long aliveBossCount = BossManager.BOSSES_IN_GAME.stream()
-                    .filter(boss -> boss != null && !BossFactory.isYar((byte) boss.id))
-                    .count();
-            msg.writer().writeByte((int) aliveBossCount);
-
-            for (Boss boss : BossManager.BOSSES_IN_GAME) {
-                if (boss == null || BossFactory.isYar((byte) boss.id)) {
-                    continue;
-                }
-
-                msg.writer().writeInt((int) boss.id);
-                msg.writer().writeInt((int) boss.id); // Có thể bạn nên dùng id và model id khác nhau?
-                msg.writer().writeShort(boss.getHead());
-
-                if (player.isVersionAbove(220)) {
-                    Part part = PartManager.getInstance().find(boss.getHead());
-                    msg.writer().writeShort(part != null ? part.getIcon(0) : -1);
-                }
-
-                msg.writer().writeShort(boss.getBody());
-                msg.writer().writeShort(boss.getLeg());
-                msg.writer().writeUTF(boss.name);
-
-                if (boss.zone != null && boss.zone.map != null) {
-                    msg.writer().writeUTF("Sống");
-                    msg.writer().writeUTF(
-                            player.getSession().actived ? boss.zone.map.mapName + " (" + boss.zone.map.mapId + ")"
-                                    : boss.zone.map.mapName + " (" + boss.zone.map.mapId + ") khu " + boss.zone.zoneId);
-                } else {
-                    msg.writer().writeUTF("Chết");
-                    msg.writer().writeUTF("Chết rồi");
-                }
-            }
-
-            player.sendMessage(msg);
-        } catch (Exception e) {
-            e.printStackTrace(); // Hoặc Log.error(...)
-        } finally {
-            if (msg != null) {
-                msg.cleanup();
-            }
         }
     }
 
@@ -1095,6 +1080,7 @@ public class UseItem {
     }
 
     public void hopQuaTanThu(Player pl, Item it) {
+
         if (InventoryService.gI().getCountEmptyBag(pl) > 14) {
             int gender = pl.gender;
             int[] id = { gender, 6 + gender, 21 + gender, 27 + gender, 12, 194, 441, 442, 443, 444, 445, 446, 447 };
@@ -1670,6 +1656,39 @@ public class UseItem {
         }
     }
 
+    private void handle_xu(Player pl, Item it) {
+        int increment = 0;
+
+        switch (it.getId()) {
+            case 1945:
+                increment = 2000;
+                break;
+            case 1946:
+                increment = 5000;
+
+                break;
+
+            case 1947:
+                increment = 10000;
+
+                break;
+            case 1948:
+                increment = 20000;
+                break;
+            case 1949:
+                increment = 50000;
+                break;
+            case 1950:
+                increment = 100000;
+                break;
+        }
+        InventoryService.gI().subQuantityItemsBag(pl, it, 1);
+        InventoryService.gI().sendItemBags(pl);
+        PlayerDAO.addVnd(pl, increment);
+        Service.gI().sendThongBao(pl, "Bạn đã cộng " + increment + " xu thành công!");
+
+    }
+
     private void eatGrapes(Player pl, Item item) {
         int percentCurrentStatima = pl.nPoint.stamina * 100 / pl.nPoint.maxStamina;
         if (percentCurrentStatima > 50) {
@@ -1755,6 +1774,40 @@ public class UseItem {
             case 385: // ẩn danh
                 pl.itemTime.lastTimeAnDanh = System.currentTimeMillis();
                 pl.itemTime.isUseAnDanh = true;
+                break;
+            case ConstItem.LUCKY_ITEM: // Lucky x2 tỉ lệ drop - cộng dồn 10 phút, tối đa 3 tiếng
+                if (pl.itemTime.isUseLucky) {
+                    // Tính thời gian còn lại
+                    long elapsed = System.currentTimeMillis() - pl.itemTime.lastTimeLucky;
+                    long remaining = pl.itemTime.luckyTimeRemaining - elapsed;
+                    if (remaining < 0) remaining = 0;
+                    
+                    // Cộng thêm 10 phút
+                    long newTime = remaining + ItemTime.TIME_LUCKY_PER_USE;
+                    if (newTime > ItemTime.TIME_LUCKY_MAX) {
+                        Service.getInstance().sendThongBao(pl, "Đã đạt tối đa 3 tiếng Lucky!");
+                        return;
+                    }
+                    pl.itemTime.luckyTimeRemaining = newTime;
+                    pl.itemTime.lastTimeLucky = System.currentTimeMillis();
+                    int minutes = (int) (newTime / 60000);
+                    Service.getInstance().sendThongBao(pl, "Cộng thêm 10 phút Lucky! Tổng: " + minutes + " phút");
+                } else {
+                    pl.itemTime.lastTimeLucky = System.currentTimeMillis();
+                    pl.itemTime.luckyTimeRemaining = ItemTime.TIME_LUCKY_PER_USE;
+                    pl.itemTime.isUseLucky = true;
+                    Service.getInstance().sendThongBao(pl, "Đã kích hoạt Lucky! Tỉ lệ drop x2 trong 10 phút!");
+                }
+                break;
+            case ConstItem.BUFF_X5_TNSM: // Buff x5 TNSM - cộng dồn 10 phút, tối đa 1 tiếng
+                useBuffTNSM(pl, 5, item);
+
+                break;
+            case ConstItem.BUFF_X10_TNSM: // Buff x10 TNSM - cộng dồn 10 phút, tối đa 1 tiếng
+                useBuffTNSM(pl, 10, item);
+                break;
+            case ConstItem.BUFF_X15_TNSM: // Buff x15 TNSM - cộng dồn 10 phút, tối đa 1 tiếng
+                useBuffTNSM(pl, 15, item);
                 break;
             case ConstItem.BO_HUYET_2: // bổ huyết 2
                 if (pl.itemTime.isUseBoHuyet) {
@@ -2084,5 +2137,86 @@ public class UseItem {
                 }
             }).start();
         }
+    }
+
+    private void useBuffTNSM(Player pl, int multiplier, Item item) {
+        boolean isActive = false;
+        long timeRemaining = 0;
+        long lastTime = 0;
+        
+        // Xác định buff nào đang được dùng
+        switch (multiplier) {
+            case 5:
+                isActive = pl.itemTime.isUseBuffX5TNSM;
+                timeRemaining = pl.itemTime.buffX5TNSMTimeRemaining;
+                lastTime = pl.itemTime.lastTimeBuffX5TNSM;
+                break;
+            case 10:
+                isActive = pl.itemTime.isUseBuffX10TNSM;
+                timeRemaining = pl.itemTime.buffX10TNSMTimeRemaining;
+                lastTime = pl.itemTime.lastTimeBuffX10TNSM;
+                break;
+            case 15:
+                isActive = pl.itemTime.isUseBuffX15TNSM;
+                timeRemaining = pl.itemTime.buffX15TNSMTimeRemaining;
+                lastTime = pl.itemTime.lastTimeBuffX15TNSM;
+                break;
+        }
+        
+        if (isActive) {
+            // Tính thời gian còn lại
+            long elapsed = System.currentTimeMillis() - lastTime;
+            long remaining = timeRemaining - elapsed;
+            if (remaining < 0) remaining = 0;
+            
+            // Cộng thêm 10 phút
+            long newTime = remaining + ItemTime.TIME_BUFF_TNSM_PER_USE;
+            if (newTime > ItemTime.TIME_BUFF_TNSM_MAX) {
+                Service.getInstance().sendThongBao(pl, "Đã đạt tối đa 1 tiếng Buff x" + multiplier + " TNSM!");
+                InventoryService.gI().subQuantityItemsBag(pl, item, 1);
+                InventoryService.gI().sendItemBags(pl);
+                return;
+            }
+            
+            // Cập nhật thời gian
+            switch (multiplier) {
+                case 5:
+                    pl.itemTime.buffX5TNSMTimeRemaining = newTime;
+                    pl.itemTime.lastTimeBuffX5TNSM = System.currentTimeMillis();
+                    break;
+                case 10:
+                    pl.itemTime.buffX10TNSMTimeRemaining = newTime;
+                    pl.itemTime.lastTimeBuffX10TNSM = System.currentTimeMillis();
+                    break;
+                case 15:
+                    pl.itemTime.buffX15TNSMTimeRemaining = newTime;
+                    pl.itemTime.lastTimeBuffX15TNSM = System.currentTimeMillis();
+                    break;
+            }
+            
+            int minutes = (int) (newTime / 60000);
+            Service.getInstance().sendThongBao(pl, "Cộng thêm 10 phút Buff x" + multiplier + " TNSM! Tổng: " + minutes + " phút");
+        } else {
+            // Kích hoạt buff mới
+            switch (multiplier) {
+                case 5:
+                    pl.itemTime.isUseBuffX5TNSM = true;
+                    pl.itemTime.buffX5TNSMTimeRemaining = ItemTime.TIME_BUFF_TNSM_PER_USE;
+                    pl.itemTime.lastTimeBuffX5TNSM = System.currentTimeMillis();
+                    break;
+                case 10:
+                    pl.itemTime.isUseBuffX10TNSM = true;
+                    pl.itemTime.buffX10TNSMTimeRemaining = ItemTime.TIME_BUFF_TNSM_PER_USE;
+                    pl.itemTime.lastTimeBuffX10TNSM = System.currentTimeMillis();
+                    break;
+                case 15:
+                    pl.itemTime.isUseBuffX15TNSM = true;
+                    pl.itemTime.buffX15TNSMTimeRemaining = ItemTime.TIME_BUFF_TNSM_PER_USE;
+                    pl.itemTime.lastTimeBuffX15TNSM = System.currentTimeMillis();
+                    break;
+            }
+            Service.getInstance().sendThongBao(pl, "Đã kích hoạt Buff x" + multiplier + " TNSM trong 10 phút!");
+        }
+        ItemTimeService.gI().sendItemTime(pl, item, (int) (ItemTime.TIME_BUFF_TNSM_PER_USE / 1000));
     }
 }

@@ -246,26 +246,26 @@ public class Service {
         }
     }
 
-    private void showListBoss1(Player player) {
+    public void showList_Broly(Player player) {
         final byte OPCODE_SHOW_BOSS_LIST = -96;
         Message msg = null;
-
         try {
             msg = new Message(OPCODE_SHOW_BOSS_LIST);
             msg.writer().writeByte(0);
-            msg.writer().writeUTF("Boss (SL: " + BossManager.BOSSES_IN_GAME.size() + ")");
 
             List<Boss> bosses = BossManager.BOSSES_IN_GAME.stream()
-                    .filter(b -> b != null && !BossFactory.isYar((byte) b.id))
+                    .filter(b -> b != null
+                            && b.name != null
+                            && b.name.contains("Broly"))
                     .toList();
 
+            msg.writer().writeUTF("Broly (SL: " + bosses.size() + ")");
             msg.writer().writeByte(bosses.size());
 
             for (Boss boss : bosses) {
                 msg.writer().writeInt((int) boss.id);
                 msg.writer().writeInt((int) boss.id);
                 msg.writer().writeShort(boss.getHead());
-
                 if (player.isVersionAbove(220)) {
                     Part part = PartManager.getInstance().find(boss.getHead());
                     msg.writer().writeShort(part != null ? part.getIcon(0) : -1);
@@ -273,7 +273,183 @@ public class Service {
                 msg.writer().writeShort(boss.getBody());
                 msg.writer().writeShort(boss.getLeg());
                 msg.writer().writeUTF(boss.name);
+                if (boss.zone != null && boss.zone.map != null) {
+                    msg.writer().writeUTF("Sống");
+                    String mapInfo = boss.zone.map.mapName + " (" + boss.zone.map.mapId + ")";
+                    if (!player.getSession().actived) {
+                        msg.writer().writeUTF(mapInfo);
+                    } else {
+                        msg.writer().writeUTF(mapInfo + " khu " + boss.zone.zoneId);
+                    }
+                } else {
+                    msg.writer().writeUTF("Chết");
+                    msg.writer().writeUTF("Chết rồi");
+                }
+            }
+            player.sendMessage(msg);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (msg != null) {
+                msg.cleanup();
+            }
+        }
+    }
 
+    public void showList_BossNhiemVu(Player player) {
+        final byte OPCODE_SHOW_BOSS_LIST = -96;
+        Message msg = null;
+        try {
+            msg = new Message(OPCODE_SHOW_BOSS_LIST);
+            msg.writer().writeByte(0);
+
+            // Danh sách ID boss nhiệm vụ
+            java.util.Set<Integer> bossNhiemVuIds = java.util.Set.of(
+                    BossFactory.TRUNG_UY_TRANG,
+                    BossFactory.KUKU,
+                    BossFactory.MAP_DAU_DINH,
+                    BossFactory.RAMBO,
+                    BossFactory.SO4,
+                    BossFactory.SO3,
+                    BossFactory.SO1,
+                    BossFactory.TIEU_DOI_TRUONG,
+                    BossFactory.FIDE_DAI_CA_1,
+                    BossFactory.FIDE_DAI_CA_2,
+                    BossFactory.FIDE_DAI_CA_3,
+                    BossFactory.ANDROID_19,
+                    BossFactory.ANDROID_20,
+                    BossFactory.ANDROID_15,
+                    BossFactory.ANDROID_14,
+                    BossFactory.ANDROID_13,
+                    BossFactory.POC,
+                    BossFactory.PIC,
+                    BossFactory.KINGKONG,
+                    BossFactory.XEN_BO_HUNG_1,
+                    BossFactory.XEN_BO_HUNG_2,
+                    BossFactory.XEN_BO_HUNG_HOAN_THIEN,
+                    BossFactory.XEN_CON,
+                    BossFactory.XEN_CON_1,
+                    BossFactory.XEN_CON_2,
+                    BossFactory.XEN_CON_3,
+                    BossFactory.XEN_CON_4,
+                    BossFactory.XEN_CON_5,
+                    BossFactory.XEN_CON_6,
+                    BossFactory.SIEU_BO_HUNG,
+                    BossFactory.DRABULA_TANG1,
+                    BossFactory.BUIBUI_TANG2,
+                    BossFactory.BUIBUI_TANG3,
+                    BossFactory.YACON_TANG4,
+                    BossFactory.DRABULA_TANG5,
+                    BossFactory.MABU_MAP);
+
+            List<Boss> bosses = BossManager.BOSSES_IN_GAME.stream()
+                    .filter(b -> b != null && bossNhiemVuIds.contains((int) b.id))
+                    .toList();
+
+            msg.writer().writeUTF("Boss NV (SL: " + bosses.size() + ")");
+            msg.writer().writeByte(bosses.size());
+
+            for (Boss boss : bosses) {
+                msg.writer().writeInt((int) boss.id);
+                msg.writer().writeInt((int) boss.id);
+                msg.writer().writeShort(boss.getHead());
+                if (player.isVersionAbove(220)) {
+                    Part part = PartManager.getInstance().find(boss.getHead());
+                    msg.writer().writeShort(part != null ? part.getIcon(0) : -1);
+                }
+                msg.writer().writeShort(boss.getBody());
+                msg.writer().writeShort(boss.getLeg());
+                msg.writer().writeUTF(boss.name);
+                if (boss.zone != null && boss.zone.map != null) {
+                    msg.writer().writeUTF("Sống");
+                    String mapInfo = boss.zone.map.mapName + " (" + boss.zone.map.mapId + ")";
+                    if (!player.getSession().actived) {
+                        msg.writer().writeUTF(mapInfo);
+                    } else {
+                        msg.writer().writeUTF(mapInfo + " khu " + boss.zone.zoneId);
+                    }
+                } else {
+                    msg.writer().writeUTF("Chết");
+                    msg.writer().writeUTF("Chết rồi");
+                }
+            }
+            player.sendMessage(msg);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (msg != null) {
+                msg.cleanup();
+            }
+        }
+    }
+
+    // Danh sách ID boss nhiệm vụ để loại bỏ khỏi boss thường
+    private static final java.util.Set<Integer> BOSS_NHIEM_VU_IDS = java.util.Set.of(
+            BossFactory.TRUNG_UY_TRANG,
+            BossFactory.KUKU,
+            BossFactory.MAP_DAU_DINH,
+            BossFactory.RAMBO,
+            BossFactory.SO4,
+            BossFactory.SO3,
+            BossFactory.SO1,
+            BossFactory.TIEU_DOI_TRUONG,
+            BossFactory.FIDE_DAI_CA_1,
+            BossFactory.FIDE_DAI_CA_2,
+            BossFactory.FIDE_DAI_CA_3,
+            BossFactory.ANDROID_19,
+            BossFactory.ANDROID_20,
+            BossFactory.ANDROID_15,
+            BossFactory.ANDROID_14,
+            BossFactory.ANDROID_13,
+            BossFactory.POC,
+            BossFactory.PIC,
+            BossFactory.KINGKONG,
+            BossFactory.XEN_BO_HUNG_1,
+            BossFactory.XEN_BO_HUNG_2,
+            BossFactory.XEN_BO_HUNG_HOAN_THIEN,
+            BossFactory.XEN_CON,
+            BossFactory.XEN_CON_1,
+            BossFactory.XEN_CON_2,
+            BossFactory.XEN_CON_3,
+            BossFactory.XEN_CON_4,
+            BossFactory.XEN_CON_5,
+            BossFactory.XEN_CON_6,
+            BossFactory.SIEU_BO_HUNG,
+            BossFactory.DRABULA_TANG1,
+            BossFactory.BUIBUI_TANG2,
+            BossFactory.BUIBUI_TANG3,
+            BossFactory.YACON_TANG4,
+            BossFactory.DRABULA_TANG5,
+            BossFactory.MABU_MAP);
+
+    public void show_list_boss_normal(Player player) {
+        final byte OPCODE_SHOW_BOSS_LIST = -96;
+        Message msg = null;
+        try {
+            msg = new Message(OPCODE_SHOW_BOSS_LIST);
+            msg.writer().writeByte(0);
+
+            List<Boss> bosses = BossManager.BOSSES_IN_GAME.stream()
+                    .filter(b -> b != null
+                            && !BossFactory.isYar((byte) b.id)
+                            && (b.name == null || !b.name.contains("Broly"))
+                            && !BOSS_NHIEM_VU_IDS.contains((int) b.id))
+                    .toList();
+
+            msg.writer().writeUTF("Boss (SL: " + bosses.size() + ")");
+            msg.writer().writeByte(bosses.size());
+
+            for (Boss boss : bosses) {
+                msg.writer().writeInt((int) boss.id);
+                msg.writer().writeInt((int) boss.id);
+                msg.writer().writeShort(boss.getHead());
+                if (player.isVersionAbove(220)) {
+                    Part part = PartManager.getInstance().find(boss.getHead());
+                    msg.writer().writeShort(part != null ? part.getIcon(0) : -1);
+                }
+                msg.writer().writeShort(boss.getBody());
+                msg.writer().writeShort(boss.getLeg());
+                msg.writer().writeUTF(boss.name);
                 if (boss.zone != null && boss.zone.map != null) {
                     msg.writer().writeUTF("Sống");
                     String mapInfo = boss.zone.map.mapName + " (" + boss.zone.map.mapId + ")";
@@ -543,11 +719,24 @@ public class Service {
                 Client.gI().show(player);
                 return;
             }
+            if (text.equals("show_vnd")) {
+                Service.gI().showTopNangDong(player);
+                return;
+            }
+            if (text.equals("update_cache")) {
+                try (Connection con = DBService.gI().getConnectionForGame()) {
+                    Manager.SHOPS = ShopDAO.getShops(con);
+                } catch (Exception e) {
+                    Log.error(Service.class, e, "Lỗi update cache shop");
+                }
+                sendThongBaoOK(player, "Cập nhật thành công");
+                return;
+            }
+
             if (text.equals("ls")) {
                 try (Connection con = DBService.gI().getConnectionForGame();) {
                     Manager.SHOPS = ShopDAO.getShops(con);
                 } catch (SQLException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
 
@@ -762,6 +951,15 @@ public class Service {
                         "Set\nThần Linh", "Tặng Ngọc", "Tặng SKH", "Đóng");
                 return;
             }
+            if (text.equals("boss_swpaned")) {
+                nro.ahwuocdz.AdminBossMenu.showMainMenu(player);
+                return;
+            }
+            if (text.startsWith("boss")) {
+                NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_BOSS_LIST, -1,
+                        "Chọn loại Boss muốn xem:", "Boss Thường", "Boss Broly", "Boss NV", "Đóng");
+                return;
+            }
             if (text.equals("nro")) {
                 for (int i = 14; i <= 20; i++) {
                     Item item = ItemService.gI().createNewItem((short) i);
@@ -788,11 +986,33 @@ public class Service {
             } else if (text.startsWith("upp")) {
                 try {
                     long power = Long.parseLong(text.replaceAll("upp", ""));
-                    addSMTN(player.pet, (byte) 2, power, false);
+                    add_TNSM(player.pet, (byte) 2, power, false);
                     return;
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+            } else if (text.startsWith("nv_")) {
+                try {
+                    String[] parts = text.split("_");
+                    if (parts.length >= 3) {
+                        byte mainTaskId = Byte.parseByte(parts[1]);
+                        byte subTaskIndex = Byte.parseByte(parts[2]);
+
+                        if (mainTaskId <= 31) {
+                            player.playerTask.taskMain.id = mainTaskId;
+                            player.playerTask.taskMain.index = subTaskIndex;
+                            TaskService.gI().sendNextTaskMain(player);
+                            Service.gI().sendThongBaoOK(player, "Chuyển task thành công");
+                            return;
+                        } else {
+                            Service.gI().sendThongBaoOK(player, "Lỗi: Task ID vượt quá giới hạn");
+                        }
+                    }
+                } catch (Exception e) {
+                    Service.gI().sendThongBaoOK(player, "Lỗi: Format không hợp lệ (nv_mainId_subIndex)");
+                    e.printStackTrace();
+                }
+                return;
             } else if (text.equals("nnv") && player.playerTask.taskMain.id <= 31) {
                 TaskService.gI().sendNextTaskMain(player);
                 return;
@@ -802,7 +1022,7 @@ public class Service {
             } else if (text.startsWith("up")) {
                 try {
                     long power = Long.parseLong(text.replaceAll("up", ""));
-                    addSMTN(player, (byte) 2, power, false);
+                    add_TNSM(player, (byte) 2, power, false);
                     return;
                 } catch (Exception e) {
                 }
@@ -829,9 +1049,7 @@ public class Service {
         if (text.startsWith("ten con la ")) {
             PetService.gI().changeNamePet(player, text.replaceAll("ten con la ", ""));
         }
-        if (text.startsWith("boss")) {
-            showListBoss1(player);
-        }
+
         if (text.equals("fixlag")) {
             Service.getInstance().player(player);
             Service.getInstance().Send_Caitrang(player);
@@ -1114,25 +1332,33 @@ public class Service {
         return ms;
     }
 
-    public void addSMTN(Player player, byte type, long param, boolean isOri) {
-        if (player.isPet) {
-            if (player.nPoint.power > player.nPoint.getPowerLimit()) {
-                return;
+    public void add_TNSM(Player player, byte type, long param, boolean isOri) {
+        int multiplier = 1;
+        if (player.itemTime != null) {
+            if (player.itemTime.isUseBuffX5TNSM) {
+                multiplier = 5;
+            } else if (player.itemTime.isUseBuffX10TNSM) {
+                multiplier = 10;
+            } else if (player.itemTime.isUseBuffX15TNSM) {
+                multiplier = 15;
             }
+        }
+        param *= multiplier;
+
+        if (player.getSession() != null && player.getSession().level_vip == 3) {
+            param = (long) (param * 1.3);
+        }
+
+        if (player.isPet) {
             player.nPoint.powerUp(param);
             player.nPoint.tiemNangUp(param);
             Player master = ((Pet) player).master;
 
-            param = master.nPoint.calSubTNSM(param);
-            if (master.nPoint.power < master.nPoint.getPowerLimit()) {
-                master.nPoint.powerUp(param);
-            }
-            master.nPoint.tiemNangUp(param);
-            addSMTN(master, type, param, true);
+            long masterParam = master.nPoint.calSubTNSM(param);
+            master.nPoint.powerUp(masterParam);
+            master.nPoint.tiemNangUp(masterParam);
+            add_TNSM(master, type, masterParam, true);
         } else {
-            if (player.nPoint.power > player.nPoint.getPowerLimit()) {
-                return;
-            }
             switch (type) {
                 case 1:
                     player.nPoint.tiemNangUp(param);
@@ -1154,36 +1380,6 @@ public class Service {
         }
     }
 
-    // public void congTiemNang(Player pl, byte type, int tiemnang) {
-    // Message msg;
-    // try {
-    // msg = new Message(-3);
-    // msg.writer().writeByte(type);// 0 là cộng sm, 1 cộng tn, 2 là cộng cả 2
-    // msg.writer().writeInt(tiemnang);// số tn cần cộng
-    // if (!pl.isPet) {
-    // pl.sendMessage(msg);
-    // } else {
-    // ((Pet) pl).master.nPoint.powerUp(tiemnang);
-    // ((Pet) pl).master.nPoint.tiemNangUp(tiemnang);
-    // ((Pet) pl).master.sendMessage(msg);
-    // }
-    // msg.cleanup();
-    // switch (type) {
-    // case 1:
-    // pl.nPoint.tiemNangUp(tiemnang);
-    // break;
-    // case 2:
-    // pl.nPoint.powerUp(tiemnang);
-    // pl.nPoint.tiemNangUp(tiemnang);
-    // break;
-    // default:
-    // pl.nPoint.powerUp(tiemnang);
-    // break;
-    // }
-    // } catch (Exception e) {
-    //
-    // }
-    // }
     public String get_HanhTinh(int hanhtinh) {
         switch (hanhtinh) {
             case 0:

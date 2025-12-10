@@ -20,7 +20,7 @@ public class DoiVND {
         }
         Item phanQua = ItemService.gI().createNewItem((short) iD);
         InventoryService.gI().addItemBag(player, phanQua, 999);
-        PlayerDAO.subVndBar(player, vND);
+        PlayerDAO.subVnd(player, vND);
         player.soDuVND -= vND;
 
         InventoryService.gI().sendItemBags(player);

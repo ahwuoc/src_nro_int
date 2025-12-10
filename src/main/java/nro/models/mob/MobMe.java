@@ -77,7 +77,7 @@ public final class MobMe extends Mob {
                     msg.writer().writeInt(this.point.dame);
                     Service.getInstance().sendMessAllPlayerInMap(this.zone, msg);
                     msg.cleanup();
-                    Service.getInstance().addSMTN(player, (byte) 2, tnsm, true);
+                    Service.getInstance().add_TNSM(player, (byte) 2, tnsm, true);
                 }
             }
         } catch (Exception e) {

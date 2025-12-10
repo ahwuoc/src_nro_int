@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * @author outcast c-cute hột me 😳
+ * @author ahwuocdz
  */
 @Setter
 @Getter

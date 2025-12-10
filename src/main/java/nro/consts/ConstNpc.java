@@ -124,6 +124,7 @@ public class ConstNpc {
         public static final byte CAY_THONG = 77;
         public static final byte OBITO = 78;
         public static final byte GOGETA_SSJ4 = 79;
+        public static final byte YARDAT = 80;
 
         // ----------------------index menu------------------------------------------
         // index menu base
@@ -316,6 +317,7 @@ public class ConstNpc {
         public static final int SHOP_APPULE_0 = 502;
         public static final int SHOP_SANTA_0 = 503;
         public static final int SHOP_SANTA_1 = 504;
+
         public static final int SHOP_SANTA_2 = 1504;
         public static final int SHOP_URON_0 = 505;
         public static final int SHOP_BA_HAT_MIT_0 = 506;
@@ -359,4 +361,25 @@ public class ConstNpc {
         // than_vu_tru
         public static final int THACH_DAU_BUBBLES = 0;
         public static final int THACH_DAU_THAN_VU_TRU = 1;
+
+        // index menu boss list
+        public static final int MENU_BOSS_LIST = 601;
+        public static final int MENU_BOSS_NHIEM_VU = 602;
+
+        // index menu nhiệm vụ đệ tử
+        public static final int MENU_TASK_DETY_MAIN = 700;
+        public static final int MENU_TASK_DETY_DIFFICULTY = 701;
+        public static final int MENU_TASK_DETY_EASY = 702;
+        public static final int MENU_TASK_DETY_HARD = 703;
+        public static final int MENU_TASK_DETY_EXTREME = 704;
+        public static final int MENU_TASK_DETY_BREAKTHROUGH = 705;
+
+        public static final int SHOP_SANTA_VIP1 = 800;
+        public static final int SHOP_SANTA_VIP2 = 801;
+        public static final int SHOP_SANTA_VIP3 = 802;
+
+        public static final int COST_VIP_1 = 50_000;
+        public static final int COST_VIP_2 = 100_000;
+        public static final int COST_VIP_3 = 200_000;
+
 }

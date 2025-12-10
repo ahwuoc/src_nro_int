@@ -35,11 +35,11 @@ public class Chill extends FutureBoss {
 
         int tempId = -1;
 
-        if (Util.isTrue(1, 100)) {
+        if (Util.isTrueDrop( 1, 100,pl)) {
             tempId = tempIds3[Util.nextInt(0, tempIds3.length - 1)];
-        } else if (Util.isTrue(1, 35)) {
+        } else if (Util.isTrueDrop( 1, 35,pl)) {
             tempId = tempIds1[Util.nextInt(0, tempIds1.length - 1)];
-        } else if (Util.isTrue(1, 100)) {
+        } else if (Util.isTrueDrop( 1, 100,pl)) {
             tempId = tempIds2[Util.nextInt(0, tempIds2.length - 1)];
         }
 

@@ -28,6 +28,10 @@ public class ItemTime {
     public static final int TIME_EAT_MEAL = 600000;
 
     public static final int TIME_DANH_NHAN_BAN = 300000;
+    public static final int TIME_LUCKY_PER_USE = 600000; // 10 phút mỗi lần dùng = 600000ms
+    public static final int TIME_LUCKY_MAX = 10800000; // Tối đa 3 tiếng = 10800000ms
+    public static final int TIME_BUFF_TNSM_PER_USE = 600000; // 10 phút mỗi lần dùng = 600000ms
+    public static final int TIME_BUFF_TNSM_MAX = 3600000; // Tối đa 1 tiếng = 3600000ms
 
     private Player player;
     public boolean isUseBoHuyet2;
@@ -48,11 +52,30 @@ public class ItemTime {
     public boolean isUseGiapXen;
     public boolean isUseCuongNo;
     public boolean isUseAnDanh;
+    public boolean isUseLucky; // Item Lucky x2 tỉ lệ drop
+    public long luckyTimeRemaining; // Thời gian Lucky còn lại (ms), có thể cộng dồn tối đa 3 tiếng
+    
+    // Buff TNSM x5
+    public boolean isUseBuffX5TNSM;
+    public long buffX5TNSMTimeRemaining;
+    public long lastTimeBuffX5TNSM;
+    
+    // Buff TNSM x10
+    public boolean isUseBuffX10TNSM;
+    public long buffX10TNSMTimeRemaining;
+    public long lastTimeBuffX10TNSM;
+    
+    // Buff TNSM x15
+    public boolean isUseBuffX15TNSM;
+    public long buffX15TNSMTimeRemaining;
+    public long lastTimeBuffX15TNSM;
+    
     public long lastTimeBoHuyet;
     public long lastTimeBoKhi;
     public long lastTimeGiapXen;
     public long lastTimeCuongNo;
     public long lastTimeAnDanh;
+    public long lastTimeLucky;
 
     public boolean isUseMayDo;
     public long lastTimeUseMayDo;
@@ -115,6 +138,41 @@ public class ItemTime {
         if (isUseAnDanh) {
             if (Util.canDoWithTime(lastTimeAnDanh, TIME_ITEM)) {
                 isUseAnDanh = false;
+            }
+        }
+        if (isUseLucky) {
+            long elapsed = System.currentTimeMillis() - lastTimeLucky;
+            if (elapsed >= luckyTimeRemaining) {
+                isUseLucky = false;
+                luckyTimeRemaining = 0;
+                Service.getInstance().sendThongBao(player, "Hiệu ứng Lucky đã hết hạn!");
+            }
+        }
+        // Buff x5 TNSM
+        if (isUseBuffX5TNSM) {
+            long elapsed = System.currentTimeMillis() - lastTimeBuffX5TNSM;
+            if (elapsed >= buffX5TNSMTimeRemaining) {
+                isUseBuffX5TNSM = false;
+                buffX5TNSMTimeRemaining = 0;
+                Service.getInstance().sendThongBao(player, "Hiệu ứng Buff x5 TNSM đã hết hạn!");
+            }
+        }
+        // Buff x10 TNSM
+        if (isUseBuffX10TNSM) {
+            long elapsed = System.currentTimeMillis() - lastTimeBuffX10TNSM;
+            if (elapsed >= buffX10TNSMTimeRemaining) {
+                isUseBuffX10TNSM = false;
+                buffX10TNSMTimeRemaining = 0;
+                Service.getInstance().sendThongBao(player, "Hiệu ứng Buff x10 TNSM đã hết hạn!");
+            }
+        }
+        // Buff x15 TNSM
+        if (isUseBuffX15TNSM) {
+            long elapsed = System.currentTimeMillis() - lastTimeBuffX15TNSM;
+            if (elapsed >= buffX15TNSMTimeRemaining) {
+                isUseBuffX15TNSM = false;
+                buffX15TNSMTimeRemaining = 0;
+                Service.getInstance().sendThongBao(player, "Hiệu ứng Buff x15 TNSM đã hết hạn!");
             }
         }
         if (isUseBanhChung) {

@@ -17,7 +17,6 @@ import nro.utils.Log;
 public class MabuEgg {
 
     private static final long DEFAULT_TIME_DONE = 7776000000L;
-    // private static final long DEFAULT_TIME_DONE = 86400000L;
 
     private Player player;
     public long lastTimeCreate;
@@ -38,10 +37,6 @@ public class MabuEgg {
     public void sendMabuEgg() {
         Message msg;
         try {
-            // Message msg = new Message(-117);
-            // msg.writer().writeByte(100);
-            // player.sendMessage(msg);
-            // msg.cleanup();
 
             msg = new Message(-122);
             msg.writer().writeShort(this.id);

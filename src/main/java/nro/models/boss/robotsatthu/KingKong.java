@@ -46,9 +46,9 @@ public class KingKong extends Boss {
             /// Roi vật phẩm noel
         } else if (Util.isTrue(100, 100)) {
              
-            /// Nv
-            TaskService.gI().checkDoneTaskKillBoss(pl, this);
         }
+        TaskService.gI().checkDoneTaskKillBoss(pl, this);
+
     }
 
     @Override

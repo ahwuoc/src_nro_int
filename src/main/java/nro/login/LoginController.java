@@ -140,6 +140,7 @@ public class LoginController {
                         int MaBaoVe = ms.reader().readInt();
                         int TongNap = ms.reader().readInt();
                         int VND = ms.reader().readInt();
+                        int level_vip = ms.reader().readInt();
                         session.userId = userID;
                         Session se = Client.gI().getSession(session);
                         if (se != null) {
@@ -160,19 +161,22 @@ public class LoginController {
                         session.MaBaoVe = MaBaoVe;
                         session.tongnap = TongNap;
                         session.vndBar = VND;
+                        session.level_vip = level_vip;
                         System.out.println("login userID: " + userID + " Succeslly");
+                        System.out.println("[Login] Sending small version...");
                         Resources.getInstance().sendSmallVersion(session);
+                        System.out.println("[Login] Sending BG version...");
                         Resources.getInstance().sendBGVersion(session);
                         session.timeWait = 0;
                         session.loginSuccess = true;
+                        System.out.println("[Login] Sending version game...");
                         DataGame.sendVersionGame(session);
+                        System.out.println("[Login] Login process completed");
                     } else {
-
                         String text = ms.reader().readUTF();
                         Service.getInstance().sendThongBaoOK(session, text);
                     }
                 } finally {
-
                     session.setLogging(false);
                 }
             }
@@ -201,7 +205,7 @@ public class LoginController {
             session.reconnect();
         }, 10000, "----------ahwuocdz----------");
     }
-    
+
     /**
      * Handle player data response from Rust server (binary format)
      */
@@ -217,7 +221,7 @@ public class LoginController {
             session.getService().onPlayerDataBinaryReceived(null);
         }
     }
-    
+
     /**
      * Handle mocnap rewards response from Rust server (binary format)
      */
@@ -233,7 +237,7 @@ public class LoginController {
             session.getService().onMocnapDataReceived(null);
         }
     }
-    
+
     /**
      * Handle mocnap claimed response from Rust server
      */

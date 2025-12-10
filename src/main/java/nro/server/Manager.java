@@ -150,6 +150,8 @@ public class Manager {
     public static final Map<String, Byte> IMAGES_BY_NAME = new HashMap<String, Byte>();
     @Getter
     public GameConfig gameConfig;
+    
+    public static GameLoop gameLoop;
 
     public static Manager gI() {
         if (i == null) {
@@ -175,6 +177,7 @@ public class Manager {
         }
         initRandomItem();
         NamekBallManager.gI().initBall();
+        initGameLoop();
     }
 
     public static byte getNFrameImageByName(String name) {
@@ -256,8 +259,7 @@ public class Manager {
                         mapTemp.maxPlayerPerZone, mapTemp.wayPoints, mapTemp.effectMaps);
                 if (map != null) {
                     SantaCity santaCity = (SantaCity) map;
-                    // 3600000 = 1H
-                    santaCity.timer(21, 0, 0, 7200000);
+                    santaCity.startScheduler();
                 }
             } else {
                 map = new nro.models.map.Map(mapTemp.id,
@@ -279,16 +281,41 @@ public class Manager {
         Log.success("Init map thành công!");
     }
 
-    private void loadDatabase() {
+    /**
+     * Initializes and starts the centralized GameLoop
+     * Requirement 1.1: WHEN the game server starts THEN the system SHALL create a single GameLoop thread that runs continuously
+     */
+    private void initGameLoop() {
+        try {
+            gameLoop = new GameLoop();
+            gameLoop.start();
+            Log.success("GameLoop initialized and started");
+        } catch (Exception e) {
+            Log.error(Manager.class, e, "Error initializing GameLoop");
+        }
+    }
+
+    private void closeStatement(PreparedStatement ps, ResultSet rs) {
+        try {
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
+    public void loadDatabase() {
         long st = System.currentTimeMillis();
         JSONValue jv = new JSONValue();
         JSONArray dataArray = null;
         JSONObject dataObject = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
+        
+        // load part first (uses its own connection)
+        PartManager.getInstance().load();
+        
         try (Connection con = DBService.gI().getConnectionForGame();) {
-            // load part
-            PartManager.getInstance().load();
 
             // load map template
             ps = con.prepareStatement("select count(id) from map_template", ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -297,6 +324,7 @@ public class Manager {
             if (rs.first()) {
                 int countRow = rs.getShort(1);
                 MAP_TEMPLATES = new MapTemplate[countRow];
+                closeStatement(ps, rs);
                 ps = con.prepareStatement("select * from map_template");
                 rs = ps.executeQuery();
                 short i = 0;
@@ -394,6 +422,7 @@ public class Manager {
             }
 
             // load skill
+            closeStatement(ps, rs);
             ps = con.prepareStatement("select * from skill_template order by nclass_id, slot");
             rs = ps.executeQuery();
             byte nClassId = -1;
@@ -444,6 +473,7 @@ public class Manager {
             Log.success("Load skill thành công (" + NCLASS.size() + ")");
 
             // load head avatar
+            closeStatement(ps, rs);
             ps = con.prepareStatement("select * from head_avatar");
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -455,6 +485,7 @@ public class Manager {
             Log.success("Load head avatar thành công (" + HEAD_AVATARS.size() + ")");
 
             // load flag bag
+            closeStatement(ps, rs);
             ps = con.prepareStatement("select * from flag_bag");
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -476,6 +507,7 @@ public class Manager {
             Log.success("Load flag bag thành công (" + FLAGS_BAGS.size() + ")");
 
             // load cải trang
+            closeStatement(ps, rs);
             ps = con.prepareStatement("select * from cai_trang");
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -488,6 +520,7 @@ public class Manager {
             Log.success("Load cải trang thành công (" + CAI_TRANGS.size() + ")");
 
             // load intrinsic
+            closeStatement(ps, rs);
             ps = con.prepareStatement("select * from intrinsic");
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -522,6 +555,7 @@ public class Manager {
             Log.success("Load intrinsic thành công (" + INTRINSICS.size() + ")");
 
             // load task
+            closeStatement(ps, rs);
             ps = con.prepareStatement("SELECT id, task_main_template.name, detail, "
                     + "task_sub_template.name AS 'sub_name', max_count, notify, npc_id, map "
                     + "FROM task_main_template JOIN task_sub_template ON task_main_template.id = "
@@ -552,6 +586,7 @@ public class Manager {
             Log.success("Load task thành công (" + TASKS.size() + ")");
 
             // load side task
+            closeStatement(ps, rs);
             ps = con.prepareStatement("select * from side_task_template");
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -580,6 +615,7 @@ public class Manager {
             Log.success("Load side task thành công (" + SIDE_TASKS_TEMPLATE.size() + ")");
 
             // load item template
+            closeStatement(ps, rs);
             ps = con.prepareStatement("select * from item_template");
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -589,7 +625,8 @@ public class Manager {
                 itemTemp.gender = rs.getByte("gender");
                 itemTemp.name = rs.getString("name");
                 itemTemp.description = rs.getString("description");
-                itemTemp.iconID = rs.getShort("icon_id");
+                short iconId = rs.getShort("icon_id");
+                itemTemp.iconID = rs.wasNull() ? (short) 1373 : iconId;
                 itemTemp.part = rs.getShort("part");
                 itemTemp.isUpToUp = rs.getBoolean("is_up_to_up");
                 itemTemp.strRequire = rs.getInt("power_require");
@@ -600,6 +637,7 @@ public class Manager {
             Log.success("Load map item template thành công (" + ITEM_TEMPLATES.size() + ")");
 
             // load item option template
+            closeStatement(ps, rs);
             ps = con.prepareStatement("select id, name from item_option_template");
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -859,9 +897,8 @@ public class Manager {
     }
 
     public static void loadEventCount() {
-        try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame()
-                    .prepareStatement("select * from event where server =" + SERVER);
+        try (java.sql.Connection con = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = con.prepareStatement("select * from event where server =" + SERVER)) {
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 EVENT_COUNT_QUY_LAO_KAME = rs.getInt("kame");
@@ -870,8 +907,6 @@ public class Manager {
                 EVENT_COUNT_THUONG_DE = rs.getInt("thuongde");
                 EVENT_COUNT_THAN_VU_TRU = rs.getInt("thanvutru");
             }
-            rs.close();
-            ps.close();
         } catch (Exception e) {
             Logger.getLogger(Manager.class
                     .getName()).log(Level.SEVERE, null, e);
@@ -879,9 +914,9 @@ public class Manager {
     }
 
     public void updateEventCount() {
-        try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement(
-                    "UPDATE event SET kame = ?, bill = ?, karin = ?, thuongde = ?, thanvutru = ? WHERE `server` = ?");
+        try (java.sql.Connection con = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = con.prepareStatement(
+                    "UPDATE event SET kame = ?, bill = ?, karin = ?, thuongde = ?, thanvutru = ? WHERE `server` = ?")) {
             ps.setInt(1, EVENT_COUNT_QUY_LAO_KAME);
             ps.setInt(3, EVENT_COUNT_THAN_HUY_DIET);
             ps.setInt(2, EVENT_COUNT_THAN_MEO);
@@ -889,7 +924,6 @@ public class Manager {
             ps.setInt(5, EVENT_COUNT_THAN_VU_TRU);
             ps.setInt(6, SERVER);
             ps.executeUpdate();
-            ps.close();
         } catch (SQLException ex) {
             Logger.getLogger(Manager.class
                     .getName()).log(Level.SEVERE, null, ex);
@@ -899,24 +933,23 @@ public class Manager {
     public void loadAttributeServer() {
         try {
             AttributeManager am = new AttributeManager();
-            PreparedStatement ps = DBService.gI().getConnectionForGame()
-                    .prepareStatement("SELECT * FROM `attribute_server`");
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                int templateID = rs.getInt("attribute_template_id");
-                int value = rs.getInt("value");
-                int time = rs.getInt("time");
-                Attribute at = Attribute.builder()
-                        .id(id)
-                        .templateID(templateID)
-                        .value(value)
-                        .time(time)
-                        .build();
-                am.add(at);
+            try (java.sql.Connection con = DBService.gI().getConnectionForGame();
+                 PreparedStatement ps = con.prepareStatement("SELECT * FROM `attribute_server`")) {
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    int id = rs.getInt("id");
+                    int templateID = rs.getInt("attribute_template_id");
+                    int value = rs.getInt("value");
+                    int time = rs.getInt("time");
+                    Attribute at = Attribute.builder()
+                            .id(id)
+                            .templateID(templateID)
+                            .value(value)
+                            .time(time)
+                            .build();
+                    am.add(at);
+                }
             }
-            rs.close();
-            ps.close();
             ServerManager.gI().setAttributeManager(am);
         } catch (SQLException ex) {
             Logger.getLogger(Manager.class
@@ -928,25 +961,26 @@ public class Manager {
         try {
             AttributeManager am = ServerManager.gI().getAttributeManager();
             List<Attribute> attributes = am.getAttributes();
-            PreparedStatement ps = DBService.gI().getConnectionForAutoSave().prepareStatement(
-                    "UPDATE `attribute_server` SET `attribute_template_id` = ?, `value` = ?, `time` = ? WHERE `id` = ?;");
-            synchronized (attributes) {
-                for (Attribute at : attributes) {
-                    try {
-                        if (at.isChanged()) {
-                            ps.setInt(1, at.getTemplate().getId());
-                            ps.setInt(2, at.getValue());
-                            ps.setInt(3, at.getTime());
-                            ps.setInt(4, at.getId());
-                            ps.addBatch();
+            try (java.sql.Connection con = DBService.gI().getConnectionForAutoSave();
+                 PreparedStatement ps = con.prepareStatement(
+                        "UPDATE `attribute_server` SET `attribute_template_id` = ?, `value` = ?, `time` = ? WHERE `id` = ?;")) {
+                synchronized (attributes) {
+                    for (Attribute at : attributes) {
+                        try {
+                            if (at.isChanged()) {
+                                ps.setInt(1, at.getTemplate().getId());
+                                ps.setInt(2, at.getValue());
+                                ps.setInt(3, at.getTime());
+                                ps.setInt(4, at.getId());
+                                ps.addBatch();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 }
+                ps.executeBatch();
             }
-            ps.executeBatch();
-            ps.close();
         } catch (SQLException ex) {
             Logger.getLogger(Manager.class
                     .getName()).log(Level.SEVERE, null, ex);

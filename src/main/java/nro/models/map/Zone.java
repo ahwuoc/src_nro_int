@@ -103,8 +103,18 @@ public class Zone {
     }
 
     private void updateMob() {
-        for (Mob mob : this.mobs) {
-            mob.update();
+        synchronized (mobs) {
+            // Create a copy to avoid ConcurrentModificationException if mobs are added/removed during update
+            List<Mob> mobsCopy = new ArrayList<>(mobs);
+            for (Mob mob : mobsCopy) {
+                try {
+                    if (mob != null) {
+                        mob.update();
+                    }
+                } catch (Exception e) {
+                    Log.error(Zone.class, e, "Error updating mob");
+                }
+            }
         }
     }
 
@@ -135,18 +145,22 @@ public class Zone {
     }
 
     private void updatePlayer() {
-        for (int i = this.notBosses.size() - 1; i >= 0; i--) {
-            Player pl = this.notBosses.get(i);
-            if (!pl.isPet && !pl.isMiniPet) {
+        synchronized (notBosses) {
+            // Create a copy to avoid ConcurrentModificationException if players are added/removed during update
+            List<Player> playersCopy = new ArrayList<>(notBosses);
+            for (Player pl : playersCopy) {
                 try {
-                    this.notBosses.get(i).update();
+                    if (pl != null) {
+                        if (!pl.isPet && !pl.isMiniPet) {
+                            pl.update();
+                        } else if (pl.isMiniPet) {
+                            // Thêm một lần nữa cho MiniPet
+                            pl.update();
+                        }
+                    }
                 } catch (Exception e) {
-                    /// VMN
+                    Log.error(Zone.class, e, "Error updating player");
                 }
-
-            } else if (pl.isMiniPet) {
-                // Thêm một lần nữa cho MiniPet
-                this.notBosses.get(i).update();
             }
         }
     }
@@ -157,9 +171,13 @@ public class Zone {
 
     private void updateItem() {
         synchronized (items) {
-            for (ItemMap item : items) {
+            // Create a copy to avoid ConcurrentModificationException if items are added/removed during update
+            List<ItemMap> itemsCopy = new ArrayList<>(items);
+            for (ItemMap item : itemsCopy) {
                 try {
-                    item.update();
+                    if (item != null) {
+                        item.update();
+                    }
                 } catch (Exception e) {
                     /// VMN
                 }
@@ -365,13 +383,13 @@ public class Zone {
             return;
 
         synchronized (itemMap) {
-            if (itemMap.isPickedUp) {
+            if (itemMap.isPickedUp && itemMap.itemTemplate.id != 78) {
                 Service.getInstance().sendThongBao(player, "Không thể nhặt vật phẩm của người khác");
                 return;
             }
 
             // Kiểm tra người chơi có quyền nhặt
-            if (itemMap.playerId != player.id && itemMap.playerId != -1) {
+            if (itemMap.playerId != player.id && itemMap.playerId != -1 && itemMap.itemTemplate.id != 78) {
                 Service.getInstance().sendThongBao(player, "Không thể nhặt vật phẩm của người khác");
                 return;
             }

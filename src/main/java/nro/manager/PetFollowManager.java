@@ -20,8 +20,8 @@ public class PetFollowManager extends AbsManager<PetFollow> {
     }
 
     public void load() {
-        try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM pet_follow");
+        try (java.sql.Connection con = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = con.prepareStatement("SELECT * FROM pet_follow")) {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 int id = rs.getInt("id_temp");
@@ -31,8 +31,6 @@ public class PetFollowManager extends AbsManager<PetFollow> {
                 byte nFrame = rs.getByte("frame");
                 add(new PetFollow(id, iconID, w, h, nFrame));
             }
-            ps.close();
-            rs.close();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

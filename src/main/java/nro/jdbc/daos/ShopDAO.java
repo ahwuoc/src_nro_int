@@ -10,10 +10,8 @@ import nro.utils.Log;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
 /**
  *
@@ -24,121 +22,94 @@ import java.util.logging.Level;
 public class ShopDAO {
 
     public static List<Shop> getShops(Connection con) {
-        List<Shop> list = new ArrayList<>();
+        List<Shop> shops = new ArrayList<>();
         try {
-            PreparedStatement ps = con.prepareStatement("select * from shop order by npc_id asc, shop_order asc");
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
+            // Load all shops
+            PreparedStatement psShops = con.prepareStatement("SELECT * FROM shop ORDER BY npc_id ASC, shop_order ASC");
+            ResultSet rsShops = psShops.executeQuery();
+            while (rsShops.next()) {
                 Shop shop = new Shop();
-                shop.id = rs.getInt(1);
-                shop.npcId = rs.getByte(2);
-                shop.shopOrder = rs.getByte(3);
-                loadShopTab(con, shop);
-                list.add(shop);
+                shop.id = rsShops.getInt("id");
+                shop.npcId = rsShops.getByte("npc_id");
+                shop.shopOrder = rsShops.getByte("shop_order");
+                shops.add(shop);
             }
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-        } catch (Exception e) {
-            Log.error(ShopDAO.class, e);
-        }
-        return list;
-    }
+            rsShops.close();
+            psShops.close();
 
-    private static void loadShopTab(Connection con, Shop shop) {
-        try {
-            PreparedStatement ps = con.prepareStatement("select * from tab_shop where shop_id = ? order by id");
-            ps.setInt(1, shop.id);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                TabShop tab = new TabShop();
-                tab.shop = shop;
-                tab.id = rs.getInt(1);
-                tab.name = rs.getString(3).replaceAll("<>", "\n");
-                loadItemShop(con, tab);
-                shop.tabShops.add(tab);
-            }
-            try {
-                if (rs != null) {
-                    rs.close();
+            // Load all tabs
+            PreparedStatement psTabs = con.prepareStatement("SELECT * FROM tab_shop ORDER BY shop_id, id");
+            ResultSet rsTabs = psTabs.executeQuery();
+            while (rsTabs.next()) {
+                int shopId = rsTabs.getInt("shop_id");
+                for (Shop shop : shops) {
+                    if (shop.id == shopId) {
+                        TabShop tab = new TabShop();
+                        tab.shop = shop;
+                        tab.id = rsTabs.getInt("id");
+                        tab.name = rsTabs.getString("name").replaceAll("<>", "\n");
+                        shop.tabShops.add(tab);
+                        break;
+                    }
                 }
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (SQLException ex) {
-                java.util.logging.Logger.getLogger(AccountDAO.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } catch (Exception e) {
-            Log.error(ShopDAO.class, e);
-        }
-    }
+            rsTabs.close();
+            psTabs.close();
 
-    private static void loadItemShop(Connection con, TabShop tabShop) {
-        try {
-            PreparedStatement ps = con.prepareStatement("select * from item_shop where is_sell = 1 and tab_id = ? "
-                    + "order by create_time desc");
-            ps.setInt(1, tabShop.id);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                ItemShop itemShop = new ItemShop();
-                itemShop.tabShop = tabShop;
-                itemShop.id = rs.getInt(1);
-                itemShop.temp = ItemService.gI().getTemplate(rs.getShort(3));
-                itemShop.gold = rs.getInt(4);
-                itemShop.gem = rs.getInt(5);
-                itemShop.isNew = rs.getBoolean(6);
-                itemShop.itemExchange = rs.getInt("item_exchange");
-                if (itemShop.itemExchange != -1) {
-                    itemShop.iconSpec = ItemService.gI().getTemplate(itemShop.itemExchange).iconID;
-                    itemShop.costSpec = rs.getInt("quantity_exchange");
+            // Load all items
+            PreparedStatement psItems = con
+                    .prepareStatement("SELECT * FROM item_shop WHERE is_sell = 1 ORDER BY tab_id, create_time DESC");
+            ResultSet rsItems = psItems.executeQuery();
+            while (rsItems.next()) {
+                int tabId = rsItems.getInt("tab_id");
+                for (Shop shop : shops) {
+                    for (TabShop tab : shop.tabShops) {
+                        if (tab.id == tabId) {
+                            ItemShop itemShop = new ItemShop();
+                            itemShop.tabShop = tab;
+                            itemShop.id = rsItems.getInt("id");
+                            itemShop.temp = ItemService.gI().getTemplate(rsItems.getShort("temp_id"));
+                            itemShop.gold = rsItems.getInt("gold");
+                            itemShop.gem = rsItems.getInt("gem");
+                            itemShop.isNew = rsItems.getBoolean("is_new");
+                            itemShop.itemExchange = rsItems.getInt("item_exchange");
+                            if (itemShop.itemExchange != -1) {
+                                itemShop.iconSpec = ItemService.gI().getTemplate(itemShop.itemExchange).iconID;
+                                itemShop.costSpec = rsItems.getInt("quantity_exchange");
+                            }
+                            tab.itemShops.add(itemShop);
+                            break;
+                        }
+                    }
                 }
-                // thay đổi vật phẩm trong shop
-                loadItemShopOption(con, itemShop);
-                tabShop.itemShops.add(itemShop);
             }
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (SQLException ex) {
-                java.util.logging.Logger.getLogger(AccountDAO.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        } catch (Exception e) {
-            Log.error(ShopDAO.class, e);
-        }
-    }
+            rsItems.close();
+            psItems.close();
 
-    private static void loadItemShopOption(Connection con, ItemShop itemShop) {
-        try {
-            PreparedStatement ps = con.prepareStatement("select * from item_shop_option where item_shop_id = ?");
-            ps.setInt(1, itemShop.id);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                itemShop.options.add(new ItemOption(rs.getInt(2), rs.getInt(3)));
-            }
-            try {
-                if (rs != null) {
-                    rs.close();
+            // Load all options
+            PreparedStatement psOptions = con.prepareStatement("SELECT * FROM item_shop_option");
+            ResultSet rsOptions = psOptions.executeQuery();
+            while (rsOptions.next()) {
+                int itemShopId = rsOptions.getInt("item_shop_id");
+                for (Shop shop : shops) {
+                    for (TabShop tab : shop.tabShops) {
+                        for (ItemShop item : tab.itemShops) {
+                            if (item.id == itemShopId) {
+                                item.options
+                                        .add(new ItemOption(rsOptions.getInt("option_id"), rsOptions.getInt("param")));
+                                break;
+                            }
+                        }
+                    }
                 }
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (SQLException ex) {
-                java.util.logging.Logger.getLogger(AccountDAO.class.getName()).log(Level.SEVERE, null, ex);
             }
+            rsOptions.close();
+            psOptions.close();
+
         } catch (Exception e) {
             Log.error(ShopDAO.class, e);
         }
+        return shops;
     }
 
 }

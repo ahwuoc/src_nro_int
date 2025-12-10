@@ -43,22 +43,22 @@ public class PartManager {
     public void load() {
         try {
             Gson gson = new Gson();
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM part");
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                short id = rs.getShort("id");
-                byte type = rs.getByte("TYPE");
-                String partJson = rs.getString("DATA");
-                int[][] partData = gson.fromJson(partJson, int[][].class);
-                Part part = new Part();
-                part.setId(id);
-                part.setType(type);
-                part.setPartData(partData);
-                add(part);
+            try (java.sql.Connection con = DBService.gI().getConnectionForGame();
+                 PreparedStatement ps = con.prepareStatement("SELECT * FROM part")) {
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    short id = rs.getShort("id");
+                    byte type = rs.getByte("TYPE");
+                    String partJson = rs.getString("DATA");
+                    int[][] partData = gson.fromJson(partJson, int[][].class);
+                    Part part = new Part();
+                    part.setId(id);
+                    part.setType(type);
+                    part.setPartData(partData);
+                    add(part);
+                }
             }
             Log.success("Load part thành công (" + parts.size() + ")");
-            rs.close();
-            ps.close();
             setData();
         } catch (SQLException ex) {
             ex.printStackTrace();

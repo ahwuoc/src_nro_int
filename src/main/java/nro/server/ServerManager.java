@@ -295,13 +295,24 @@ public class ServerManager {
         }
         Client.gI().close();
         Log.success("SUCCESSFULLY MAINTENANCE!...................................");
-        /// AUTO RUN
+        /// AUTO RUN - Cross-platform support
         try {
-            Process process = Runtime.getRuntime().exec("cmd /c start run.bat");
-
+            String os = System.getProperty("os.name").toLowerCase();
+            ProcessBuilder processBuilder;
+            
+            if (os.contains("win")) {
+                // Windows
+                processBuilder = new ProcessBuilder("cmd", "/c", "start", "run.bat");
+            } else {
+                // Linux/Mac
+                processBuilder = new ProcessBuilder("/bin/bash", "-c", "./run.sh");
+            }
+            
+            processBuilder.inheritIO();
+            Process process = processBuilder.start();
             process.waitFor();
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            Log.error(ServerManager.class, e, "Lỗi khởi động lại server");
         }
         System.exit(0);
     }
@@ -343,6 +354,16 @@ public class ServerManager {
             // TopKillWhisManager.getInstance().load();
             // TopBanDoKhoBau.getInstance().load();
         }, 0, 600000, TimeUnit.MILLISECONDS);
+
+        // Update Địa Cung mỗi 5 giây
+        ScheduledExecutorService autoDungeonManage = Executors.newScheduledThreadPool(1);
+        autoDungeonManage.scheduleWithFixedDelay(() -> {
+            try {
+                nro.ahwuocdz.DungeonManage.gI().globalUpdate();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, 5000, 5000, TimeUnit.MILLISECONDS);
 
     }
 }

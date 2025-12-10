@@ -156,6 +156,9 @@ public boolean isDTL() {
         return template.id;
     }
 
+    public short get_icon(){
+        return template.iconID;
+    }
     public byte getType() {
         return template.type;
     }

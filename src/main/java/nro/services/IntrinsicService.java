@@ -114,7 +114,7 @@ public class IntrinsicService {
         sendInfoIntrinsic(player);
     }
 
-    public void open(Player player) {
+    public void open_noitai_normal(Player player) {
         // if (player.nPoint.power >= 10000000000L) {
         // int goldRequire = COST_OPEN[player.playerIntrinsic.countOpen] * 1000000;
         // if (player.inventory.gold >= goldRequire) {

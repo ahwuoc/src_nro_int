@@ -11,13 +11,8 @@ public class ItemData {
     //------------------------------------------------------ start update client
     public static void updateItem(Session session) {
         updateItemOptionItemplate(session);
-//        int count = 500;
-//        updateItemTemplate(session, count);
-//        updateItemTemplate(session, count, Manager.ITEM_TEMPLATES.size());
-
         updateItemTemplate(session, 750);
         updateItemTemplate(session, 750, Manager.ITEM_TEMPLATES.size());
-//        updateItemTemplate(session, 1500, Manager.ITEM_TEMPLATES.size());
     }
 
     private static void updateItemOptionItemplate(Session session) {
@@ -56,7 +51,7 @@ public class ItemData {
                 msg.writer().writeUTF(itemTemplate.description);
                 msg.writer().writeByte(itemTemplate.level);
                 msg.writer().writeInt(itemTemplate.strRequire);
-                msg.writer().writeShort(itemTemplate.iconID);
+                msg.writer().writeShort(itemTemplate.iconID == -1 ? 1376 : itemTemplate.iconID);
                 msg.writer().writeShort(itemTemplate.part);
                 msg.writer().writeBoolean(itemTemplate.isUpToUp);
             }
@@ -78,7 +73,6 @@ public class ItemData {
             msg.writer().writeShort(start);
             msg.writer().writeShort(end);
             for (int i = start; i < end; i++) {
-//                System.out.println("start: " + start + " -> " + end + " id " + Manager.ITEM_TEMPLATES.get(i).id);
                 msg.writer().writeByte(Manager.ITEM_TEMPLATES.get(i).type);
                 msg.writer().writeByte(Manager.ITEM_TEMPLATES.get(i).gender);
                 msg.writer().writeUTF(Manager.ITEM_TEMPLATES.get(i).name);

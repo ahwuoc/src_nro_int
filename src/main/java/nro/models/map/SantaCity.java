@@ -12,10 +12,8 @@ import nro.services.MobService;
 import nro.services.Service;
 import nro.utils.Log;
 import nro.utils.Util;
-import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -25,14 +23,45 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 
 /**
- *
  * @author 💖 ahwuocdz 💖
  */
 @Getter
 public class SantaCity extends Map {
 
+    // Timezone Việt Nam
+    private static final ZoneId VIETNAM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+
+    // Cấu hình khung giờ mở event Hirudegarn
+    public static class TimeRange {
+        public final int openHour, openMin, openSec;
+        public final int closeHour, closeMin, closeSec;
+
+        public TimeRange(int openHour, int openMin, int openSec,
+                int closeHour, int closeMin, int closeSec) {
+            this.openHour = openHour;
+            this.openMin = openMin;
+            this.openSec = openSec;
+            this.closeHour = closeHour;
+            this.closeMin = closeMin;
+            this.closeSec = closeSec;
+        }
+        
+        public boolean isInRange(LocalTime now) {
+            LocalTime open = LocalTime.of(openHour, openMin, openSec);
+            LocalTime close = LocalTime.of(closeHour, closeMin, closeSec);
+            return !now.isBefore(open) && now.isBefore(close);
+        }
+    }
+
+
+    // Cấu hình các khung giờ mở event (có thể thêm nhiều khung giờ)
+    public static final TimeRange[] TIME_RANGES = {
+        new TimeRange(21, 0, 0, 23, 0, 0),  // 21:00 - 23:00
+    };
+
     private boolean isOpened;
     private boolean isClosed;
+    private ScheduledExecutorService scheduler;
 
     public SantaCity(int mapId, String mapName, byte planetId, byte tileId, byte bgId, byte bgType, byte type,
             int[][] tileMap, int[] tileTop, int zones, boolean isMapOffline, int maxPlayer, List<WayPoint> wayPoints,
@@ -90,38 +119,75 @@ public class SantaCity extends Map {
         }
     }
 
+
     public void open() {
         if (!isOpened) {
             this.isOpened = true;
+            System.out.println("[SantaCity] Event OPENED - " + LocalTime.now(VIETNAM_ZONE));
         }
     }
 
-    public void timer(int hours, int minutes, int seconds, long time) {
-        LocalDateTime localNow = LocalDateTime.now();
-        ZoneId currentZone = ZoneId.of("Asia/Ho_Chi_Minh");
-        ZonedDateTime zonedNow = ZonedDateTime.of(localNow, currentZone);
-        ZonedDateTime zonedNext5 = zonedNow.withHour(hours).withMinute(minutes).withSecond(seconds);
-        if (zonedNow.compareTo(zonedNext5) > 0) {
-            zonedNext5 = zonedNext5.plusDays(1);
-        }
-
-        Duration duration = Duration.between(zonedNow, zonedNext5);
-        long initalDelay = duration.getSeconds();
-        Runnable runnable = new Runnable() {
-            public void run() {
-                try {
-                    reset();
-                    open();
-                    Thread.sleep(time);
-                    close();
-                } catch (InterruptedException ex) {
-                    Log.error(SantaCity.class, ex, ex.getMessage());
-                }
+    /**
+     * Kiểm tra xem hiện tại có đang trong khung giờ mở event không (theo giờ Việt Nam)
+     */
+    public boolean isInOpenTime() {
+        LocalTime now = LocalTime.now(VIETNAM_ZONE);
+        for (TimeRange range : TIME_RANGES) {
+            if (range.isInRange(now)) {
+                return true;
             }
-        };
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(runnable, initalDelay, 1 * 24 * 60 * 60, TimeUnit.SECONDS);
+        }
+        return false;
     }
+
+    /**
+     * Khởi động scheduler kiểm tra khung giờ mỗi 30 giây
+     */
+    public void startScheduler() {
+        if (scheduler != null) {
+            scheduler.shutdown();
+        }
+        scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(this::checkAndUpdateStatus, 0, 30, TimeUnit.SECONDS);
+        System.out.println("[SantaCity] Scheduler started - Time ranges: " + getTimeRangesInfo() + " (Vietnam timezone)");
+    }
+
+    /**
+     * Kiểm tra và cập nhật trạng thái event theo khung giờ
+     */
+    private void checkAndUpdateStatus() {
+        try {
+            boolean shouldBeOpen = isInOpenTime();
+            
+            if (shouldBeOpen && !isOpened) {
+                // Đến giờ mở
+                reset();
+                open();
+            } else if (!shouldBeOpen && isOpened && !isClosed) {
+                // Hết giờ, đóng event
+                close();
+            }
+        } catch (Exception e) {
+            Log.error(SantaCity.class, e, "Error in checkAndUpdateStatus");
+        }
+    }
+
+    /**
+     * Lấy thông tin khung giờ mở event dạng text
+     */
+    public static String getTimeRangesInfo() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < TIME_RANGES.length; i++) {
+            TimeRange r = TIME_RANGES[i];
+            sb.append(String.format("%02d:%02d - %02d:%02d", 
+                r.openHour, r.openMin, r.closeHour, r.closeMin));
+            if (i < TIME_RANGES.length - 1) {
+                sb.append(", ");
+            }
+        }
+        return sb.toString();
+    }
+
 
     public void reset() {
         this.isOpened = false;
@@ -140,6 +206,7 @@ public class SantaCity extends Map {
     public void close() {
         if (!isClosed) {
             isClosed = true;
+            System.out.println("[SantaCity] Event CLOSED - " + LocalTime.now(VIETNAM_ZONE));
             synchronized (zones) {
                 for (Zone z : zones) {
                     try {
@@ -153,10 +220,8 @@ public class SantaCity extends Map {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
                 }
             }
         }
     }
-
 }

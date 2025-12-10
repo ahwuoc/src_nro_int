@@ -45,7 +45,6 @@ public class Session {
 
     static final byte[] KEYS = { 0 };
     byte curR, curW;
-    public int vnd;
     private Socket socket;
     Thread sendThread;
     Thread receiveThread;
@@ -88,6 +87,7 @@ public class Session {
     public List<Item> itemsReward;
     public String dataReward;
     public int ruby;
+    public int level_vip;
     public int diemTichNap;
     public int server;// server account hiện tại
     public int version;
@@ -328,6 +328,12 @@ public class Session {
     public void enter() {
         if (!joinedGame) {
             joinedGame = true;
+
+            // Kiểm tra và xử lý nếu player đang ở dungeon map
+            nro.ahwuocdz.DungeonManage.gI().handlePlayerLogin(player);
+
+            validateAndFixPlayerZone();
+
             player.nPoint.initPowerLimit();
             if (player.pet != null) {
                 player.pet.nPoint.initPowerLimit();
@@ -364,6 +370,65 @@ public class Session {
             // if (Manager.EVENT_SEVER == 3) {
             // RewardService.gI().rewardFirstTimeLoginPerDay(player);
             // }
+        }
+    }
+
+    private void validateAndFixPlayerZone() {
+        try {
+            // Map và zone mặc định
+            final int DEFAULT_MAP_ID = 5; // Làng Kami
+            final int DEFAULT_ZONE_ID = 0;
+            final int DEFAULT_X = 200;
+            final int DEFAULT_Y = 336;
+
+            boolean needFix = false;
+            String reason = "";
+
+            // Kiểm tra zone null
+            if (player.zone == null) {
+                needFix = true;
+                reason = "zone is null";
+            }
+            // Kiểm tra map null
+            else if (player.zone.map == null) {
+                needFix = true;
+                reason = "map is null";
+            }
+            // Kiểm tra zone có tồn tại trong map không
+            else {
+                nro.models.map.Map map = player.zone.map;
+                boolean zoneExists = false;
+                if (map.zones != null) {
+                    for (nro.models.map.Zone z : map.zones) {
+                        if (z == player.zone || z.zoneId == player.zone.zoneId) {
+                            zoneExists = true;
+                            break;
+                        }
+                    }
+                }
+                if (!zoneExists) {
+                    needFix = true;
+                    reason = "zone not found in map zones list";
+                }
+            }
+
+            // Sửa lỗi bằng cách đưa về map mặc định
+            if (needFix) {
+                System.out.println("[Session] Fixing invalid zone for player " + player.name + ": " + reason);
+                nro.models.map.Map defaultMap = nro.services.MapService.gI().getMapById(DEFAULT_MAP_ID);
+                if (defaultMap != null && defaultMap.zones != null && !defaultMap.zones.isEmpty()) {
+                    nro.models.map.Zone defaultZone = defaultMap.zones.size() > DEFAULT_ZONE_ID
+                            ? defaultMap.zones.get(DEFAULT_ZONE_ID)
+                            : defaultMap.zones.get(0);
+                    player.zone = defaultZone;
+                    player.location.x = DEFAULT_X;
+                    player.location.y = DEFAULT_Y;
+                    System.out.println("[Session] Relocated player to default map " + DEFAULT_MAP_ID);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("[Session] Error validating zone: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

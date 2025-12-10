@@ -1,6 +1,7 @@
 package nro.services.mocnap;
 
 import nro.consts.ConstNpc;
+import nro.jdbc.DBService;
 import nro.models.item.ItemOptionTemplate;
 import nro.models.item.ItemTemplate;
 import nro.models.player.Player;
@@ -9,6 +10,7 @@ import nro.services.NpcService;
 import nro.services.Service;
 import nro.utils.Util;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,43 +20,38 @@ import java.util.List;
  * @author 💖 YTB ahwuocdz 💖
  */
 public class MocnapMenuService {
-    
+
     private static MocnapMenuService instance;
-    
+
     public static MocnapMenuService gI() {
         if (instance == null) {
             instance = new MocnapMenuService();
         }
         return instance;
     }
-    
-    /**
-     * Hiển thị menu chính - danh sách các mốc nạp
-     */
+
     public void showMainMenu(Player player) {
         try {
-            // Load config nếu chưa load
-            if (!MocnapService.gI().isLoaded()) {
-                boolean loaded = MocnapService.gI().loadFromLoginServer(5000);
+            try {
+                Connection conn = DBService.gI().getConnectionForGame();
+                boolean loaded = MocnapService.gI().loadFromDatabase(conn);
                 if (!loaded) {
                     Service.getInstance().sendThongBao(player, "Không thể tải thông tin mốc nạp");
                     return;
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Service.getInstance().sendThongBao(player, "Lỗi kết nối database");
+                return;
             }
-
-            // Lấy tổng tiền đã nạp
             int totalRecharge = Service.CheckMocNap(player, 0) ? player.getSession().tongnap : 0;
-
-            // Lấy các mốc đã nhận (bit flags)
-            int claimedFlags = player.event.getMocNapDaNhan();
-
-            // Build menu text
+            int claimedFlags = MocnapClaimHandler.gI().getClaimedFlags((int) player.id);
             StringBuilder menuText = new StringBuilder();
             menuText.append("|7|MỐC NẠP THƯỞNG\n");
             menuText.append("|1|Tổng nạp:\n");
             menuText.append("|6|").append(Util.numberToMoney(totalRecharge)).append(" VNĐ\n");
             menuText.append("|4|━━━━━━━━━━━━━━━━\n");
-            menuText.append("|2|Chọn mốc để xem chi tiết:\n\n");
+            menuText.append("|2|Chọn mốc để xem chi tiết:\n");
 
             List<MocnapService.MocnapMilestone> milestones = MocnapService.gI().getAllMilestones();
             List<String> options = new ArrayList<>();
@@ -66,13 +63,12 @@ public class MocnapMenuService {
                 if (claimed) {
                     status = "|8|[✓ Đã nhận]";
                 } else if (canClaim) {
-                    status = "|2|[Có thể nhận]";
+                    status = "|7|[Có thể nhận]";
                 } else {
-                    status = "|7|[Chưa đủ]";
+                    status = "|3|[Chưa đủ]";
                 }
 
                 menuText.append(status).append(" ").append(milestone.title).append("\n");
-                menuText.append("|6|").append(Util.numberToMoney(milestone.require)).append(" VNĐ\n");
 
                 // Add option button
                 options.add(milestone.title);
@@ -104,46 +100,35 @@ public class MocnapMenuService {
             // Lấy tổng tiền đã nạp
             int totalRecharge = Service.CheckMocNap(player, 0) ? player.getSession().tongnap : 0;
 
-            // Lấy các mốc đã nhận (bit flags)
-            int claimedFlags = player.event.getMocNapDaNhan();
+            // Lấy các mốc đã nhận từ database
+            int claimedFlags = MocnapClaimHandler.gI().getClaimedFlags((int) player.id);
             boolean claimed = (claimedFlags & (1 << milestone.id)) != 0;
             boolean canClaim = totalRecharge >= milestone.require && !claimed;
 
             // Build menu text
             StringBuilder menuText = new StringBuilder();
             menuText.append("|7|").append(milestone.title).append("\n");
-            menuText.append("|4|━━━━━━━━━━━━━━━━\n");
-            menuText.append("|1|Yêu cầu nạp:\n");
-            menuText.append("|6|").append(Util.numberToMoney(milestone.require)).append(" VNĐ\n");
-            menuText.append("|1|Đã nạp:\n");
-            menuText.append("|6|").append(Util.numberToMoney(totalRecharge)).append(" VNĐ\n\n");
+            menuText.append("|4|━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            menuText.append("|1|Yêu cầu nạp: ").append(Util.numberToMoney(milestone.require)).append(" VNĐ\n");
+            menuText.append("|1|Đã nạp:  ").append(Util.numberToMoney(totalRecharge)).append(" VNĐ\n");
 
             if (claimed) {
                 menuText.append("|8|✓ Đã nhận phần thưởng\n");
-                menuText.append("|7|\n");
             } else if (canClaim) {
                 menuText.append("|2|✓ Đủ điều kiện nhận thưởng\n");
-                menuText.append("|7|\n");
             } else {
                 int needed = milestone.require - totalRecharge;
-                menuText.append("|7|✗ Cần nạp thêm:\n");
-                menuText.append("|6|").append(Util.numberToMoney(needed)).append(" VNĐ\n");
-                menuText.append("|7|\n");
+                menuText.append("|7|✗ Cần nạp thêm: ").append(Util.numberToMoney(needed)).append(" VNĐ\n");
             }
+            menuText.append("|4|━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
             menuText.append("|1|Phần thưởng:\n");
 
-            List<MocnapService.MocnapItem> sortedItems = new ArrayList<>(milestone.items);
-            sortedItems.sort((a, b) -> {
-                if (!a.options.isEmpty() && b.options.isEmpty())
-                    return -1;
-                if (a.options.isEmpty() && !b.options.isEmpty())
-                    return 1;
-                return 0;
-            });
-
-            for (MocnapService.MocnapItem item : sortedItems) {
+            for (MocnapService.MocnapItem item : milestone.rewards) {
                 ItemTemplate template = ItemService.gI().getTemplate(item.itemId);
-                menuText.append("|3|• ").append(template.name).append(" x").append(item.quantity).append("\n");
+                if (template == null) {
+                    continue;
+                }
+                menuText.append("• ").append(template.name).append(" x").append(item.quantity).append("\n");
                 if (!item.options.isEmpty()) {
                     for (MocnapService.MocnapOption opt : item.options) {
                         if (opt.id == 21)
@@ -151,7 +136,7 @@ public class MocnapMenuService {
                         ItemOptionTemplate optTemplate = ItemService.gI().getItemOptionTemplate(opt.id);
                         if (optTemplate != null) {
                             String optionName = optTemplate.name.replaceAll("#", String.valueOf(opt.param));
-                            menuText.append("  ► ").append(optionName).append("\n");
+                            menuText.append("|7|  ► ").append(optionName).append("\n");
                         }
                     }
                 }

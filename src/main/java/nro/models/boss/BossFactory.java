@@ -7,6 +7,7 @@ import nro.models.boss.td.Kogu;
 import nro.models.boss.td.Bujin;
 import nro.models.boss.td.Bojack;
 import nro.models.boss.td.Bido;
+import nro.ahwuocdz.boss_world;
 import nro.consts.ConstMap;
 import nro.models.boss.bill.*;
 import nro.models.boss.bosstuonglai.*;
@@ -171,6 +172,8 @@ public class BossFactory {
     public static final int FIDEGOLD = -100095;
     public static final int CUMBER = -100096;
     public static final int CUMBER2 = -100097;
+    public static final int BOSS_WORLD = -1100055;
+
 
     public static final int THAN_MEO = -100098;
 
@@ -238,17 +241,24 @@ public class BossFactory {
     public static void initBoss() {
         new Thread(() -> {
             try {
-                // createBoss(TUAN_LOC_EVENT);
-                // createBoss(ONG_GIA_NOEL);
+                createBoss(TUAN_LOC_EVENT);
+                createBoss(ONG_GIA_NOEL);
                 // createBoss(BROLYKHOINGUYEN);
-                // createBoss(FU);
+                createBoss(FU);
                 createBoss(SIEU_BO_HUNG);
-                // createBoss(BERUSHALLOWEEN);
+                createBoss(BERUSHALLOWEEN);
                 createBoss(THIENSU);
-                // createBoss(SUPERBOJACK);
+                createBoss(SUPERBOJACK);
+                createBoss(HUYDIET);
+                createBoss(SUPERBLACKGOKU);
+
+
                 // createBoss(THODAICA);
                 createBoss(XEN_BO_HUNG_1);
                 createBoss(XEN_BO_HUNG);
+                createBoss(CUMBER);
+                createBoss(CUMBER2);
+
                 createBoss(XEN_CON_1);
                 createBoss(XEN_CON_2);
                 createBoss(XEN_CON_3);
@@ -267,6 +277,7 @@ public class BossFactory {
                 createBoss(ANDROID_13);
                 createBoss(KINGKONG);
                 createBoss(CUMBER);
+                createBoss(BOSS_WORLD);
                 createBoss(SUPER_BROLY_RED);
                 for (int i = 0; i < 30; i++) {
                     createBoss(BROLY);
@@ -334,6 +345,9 @@ public class BossFactory {
     public static Boss createBoss(int bossId) {
         Boss boss = null;
         switch (bossId) {
+            case BOSS_WORLD:
+                boss = new boss_world();
+                break;
             case HUYDIET:
                 boss = new Huydiet();
                 break;
@@ -502,12 +516,12 @@ public class BossFactory {
             // case FIDEGOLD:
             // boss = new FideGold();
             // break;
-            // case CUMBER:
-            // boss = new Cumber();
-            // break;
-            // case CUMBER2:
-            // boss = new SuperCumber();
-            // break;
+            case CUMBER:
+            boss = new Cumber();
+            break;
+            case CUMBER2:
+            boss = new SuperCumber();
+            break;
         }
         return boss;
     }

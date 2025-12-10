@@ -58,6 +58,7 @@ public class DataGame {
     public static void sendVersionGame(Session session) {
         Message msg;
         try {
+            System.out.println("[DataGame] Creating version message...");
             msg = Service.getInstance().messageNotMap((byte) 4);
             msg.writer().writeByte(vsData);
             msg.writer().writeByte(vsMap);
@@ -69,9 +70,13 @@ public class DataGame {
             for (Caption caption : captions) {
                 msg.writer().writeLong(caption.getPower());
             }
+            System.out.println("[DataGame] Sending version message...");
             session.sendMessage(msg);
             msg.cleanup();
+            System.out.println("[DataGame] Version message sent successfully");
         } catch (Exception e) {
+            System.err.println("[DataGame] Error sending version: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

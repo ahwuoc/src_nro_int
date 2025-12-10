@@ -39,7 +39,7 @@ public class Zangya extends FutureBoss {
     @Override
    public void rewards(Player pl) {
         TopBoss.updatediemnoel(pl);
-        if (Util.isTrue(10, 100)) {
+        if (Util.isTrueDrop(10, 100,pl)) {
             int soluong = Util.nextInt(1, 3);
             for (int i = 0; i < soluong; i++) {
                 int vatpham = 649;
@@ -51,7 +51,7 @@ public class Zangya extends FutureBoss {
                 Service.getInstance().dropItemMap(this.zone, itemMap);
             }
         }
-         if (Util.isTrue(1, 40)) {
+         if (Util.isTrueDrop( 1, 40,pl)) {
             int soluong = 1;
             for (int i = 0; i < soluong; i++) {
                 int vatpham = 926;
@@ -59,11 +59,10 @@ public class Zangya extends FutureBoss {
                 int xPosition = pl.location.x + randomvitrix;
                 int yPosition = this.zone.map.yPhysicInTop(pl.location.x, pl.location.y - 24);
                 ItemMap itemMap = new ItemMap(this.zone, vatpham, 1, xPosition, yPosition, pl.id);
-
                 Service.getInstance().dropItemMap(this.zone, itemMap);
             }
         }
-          if (Util.isTrue(1, 40)) {
+          if (Util.isTrueDrop(1, 40,pl)) {
             int soluong = 1;
             for (int i = 0; i < soluong; i++) {
                 int vatpham = 925;
@@ -71,12 +70,10 @@ public class Zangya extends FutureBoss {
                 int xPosition = pl.location.x + randomvitrix;
                 int yPosition = this.zone.map.yPhysicInTop(pl.location.x, pl.location.y - 24);
                 ItemMap itemMap = new ItemMap(this.zone, vatpham, 1, xPosition, yPosition, pl.id);
-
                 Service.getInstance().dropItemMap(this.zone, itemMap);
             }
         }
     }
-
     @Override
     public void checkPlayerDie(Player pl) {
 

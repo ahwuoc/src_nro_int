@@ -78,6 +78,15 @@ public class ShopService {
             case ConstNpc.SHOP_SANTA_3:
                 shop = getShop(player, ConstNpc.SANTA, 3, -1);
                 break;
+            case ConstNpc.SHOP_SANTA_VIP1:
+                shop = getShop(player, ConstNpc.SANTA, 4, -1);
+                break;
+            case ConstNpc.SHOP_SANTA_VIP2:
+                shop = getShop(player, ConstNpc.SANTA, 5, -1);
+                break;
+            case ConstNpc.SHOP_SANTA_VIP3:
+                shop = getShop(player, ConstNpc.SANTA, 6, -1);
+                break;
             case ConstNpc.SHOP_BA_HAT_MIT_0:
                 shop = getShop(player, ConstNpc.BA_HAT_MIT, 0, -1);
                 break;
@@ -248,7 +257,6 @@ public class ShopService {
 
     // shop bùa
     public void openShopBua(Player player, int shopId, int order) {
-        // player.iDMark.setShopId(shopId);
         Shop shop = getShopBua(player, getShop(player, ConstNpc.BA_HAT_MIT, order, -1));
         openShopType0(player, shop, shopId);
     }
@@ -324,8 +332,6 @@ public class ShopService {
                 for (TabShop tab : shop.tabShops) {
                     msg.writer().writeUTF(tab.name);
                     msg.writer().writeByte(tab.itemShops.size());
-                    // System.out.println("shopId: " + shopId);
-                    // System.out.println(tab.name);
                     for (ItemShop itemShop : tab.itemShops) {
                         msg.writer().writeShort(itemShop.temp.id);
                         msg.writer().writeShort(itemShop.iconSpec);
@@ -434,33 +440,7 @@ public class ShopService {
                         return;
                     }
                 }
-                // if (is.options.size() != 0 && is.options.get(0).optionTemplate.id == 247) {
-                // is.options.clear();
-                // is.options.add(new ItemOption(50, Util.nextInt(10, 25)));
-                // is.options.add(new ItemOption(77, Util.nextInt(10, 25)));
-                // is.options.add(new ItemOption(103, Util.nextInt(10, 25)));
-                // is.options.add(new ItemOption(30, 1));
-                //
-                // } else if (is.options.size() != 0 && is.options.get(0).optionTemplate.id ==
-                // 249) {
-                // is.options.clear();
-                // double tile = Math.random();
-                // if (tile < 0.2) {
-                // is.options.add(new ItemOption(5, Util.nextInt(70, 120)));
-                // } else {
-                // is.options.add(new ItemOption(5, Util.nextInt(50, 69)));
-                // }
-                // is.options.add(new ItemOption(50, Util.nextInt(1, 10)));
-                // is.options.add(new ItemOption(77, Util.nextInt(1, 10)));
-                // is.options.add(new ItemOption(103, Util.nextInt(1, 10)));
-                // is.options.add(new ItemOption(30, 1));
-                // }
                 switch (player.iDMark.getShopId()) {
-                    // case ConstNpc.SHOP_SANTA_1:
-                    // player.head = is.temp.part;
-                    // Service.getInstance().Send_Caitrang(player);
-                    // Service.getInstance().sendThongBao(player, "Đổi kiểu tóc thành công");
-                    // break;
                     case ConstNpc.SHOP_SANTA_3:
                         Service.gI().sendThongBao(player, "Bạn chưa mở khóa danh hiệu này");
                         break;
@@ -574,18 +554,6 @@ public class ShopService {
                         if (is.temp.id == 517 || is.temp.id == 518) {
                             reopenShop(player, 39, 1);
                         }
-                        // if (player.iDMark.getShopId() == ConstNpc.SHOP_TORIBOT) {
-                        // if (is.options.size() == 4) {
-                        // is.options.clear();
-                        // is.options.add(new ItemOption(247, 0));
-                        // }
-                        // }
-                        // if (player.iDMark.getShopId() == ConstNpc.SHOP_TORIBOT) {
-                        // if (is.options.size() == 5) {
-                        // is.options.clear();
-                        // is.options.add(new ItemOption(249, 0));
-                        // }
-                        // }
                         break;
                 }
             } else {

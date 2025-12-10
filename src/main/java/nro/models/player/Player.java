@@ -149,6 +149,9 @@ public class Player {
 
     public int dameMaFuBa = 0;
 
+    // Nhiệm vụ đệ tử
+    public nro.models.task.PlayerTaskDety taskDety;
+
     public int DanhQuaiNhanNgoc = 0;
 
     public long idPlayerForNPC;
@@ -486,7 +489,7 @@ public class Player {
                     if (fusion != null) {
                         fusion.update();
                     }
-                    if (effectSkin != null) {
+                    if (effectSkill != null) {
                         effectSkill.update();
                     }
                     if (mobMe != null) {
@@ -515,7 +518,6 @@ public class Player {
                     } catch (Exception e) {
                         /// VMN
                     }
-
                     if (!this.isBoss && !this.isPet && !this.isMiniPet) {
                         MabuWar.gI().update(this);
                         if (this.server != Manager.SERVER) {
@@ -536,7 +538,7 @@ public class Player {
                     }
                     if (!this.isBoss && !this.isPet && !this.isMiniPet) {
                         boolean doneSendNotify = false;
-                        if (this.zone.map.mapId == 57) {
+                        if (this.zone != null && this.zone.map != null && this.zone.map.mapId == 57) {
                             if (this.zone.isCheckKilledAll(57)) {
                                 if (doneSendNotify = false) {
                                     Service.getInstance().sendThongBao(this, "Mau đi tìm độc nhãn");
@@ -668,18 +670,6 @@ public class Player {
         if (this.effectSkill != null && this.effectSkill.isBienHinh) {
             return ConstPlayer.AURABIENHINH[this.gender][this.effectSkill.levelBienHinh - 1];
         }
-        // if (fusion != null && fusion.typeFusion != ConstPlayer.NON_FUSION) {
-        // if (inventory != null && pet != null && inventory.itemsBody.size() > 5 &&
-        // inventory.itemsBody.get(5).isNotNullItem() && pet.inventory != null &&
-        // pet.inventory.itemsBody.size() > 5) {
-        // Short idCaiTrangSP = inventory.itemsBody.get(5).template.id;
-        // Short idCaitrangDT = pet.inventory.itemsBody.get(5).template.id;
-        // if ((idCaiTrangSP == 1315 && idCaitrangDT == 1317) || (idCaiTrangSP == 1317
-        // && idCaitrangDT == 1315)) {
-        // return 14;
-        // }
-        // }
-        // }
         if (inventory != null && inventory.itemsBody.size() > 5 && inventory.itemsBody.get(5).isNotNullItem()) {
             Short equippedItemId = inventory.itemsBody.get(5).template.id;
             if (equippedItemId == 1315 || equippedItemId == 1317) {

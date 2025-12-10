@@ -611,7 +611,7 @@ public class SkillService {
                 Service.getInstance().sendMessAnotherNotMeInMap(plInjure, msg);
                 msg.cleanup();
             }
-            Service.getInstance().addSMTN(plInjure, (byte) 2, 1, false);
+            Service.getInstance().add_TNSM(plInjure, (byte) 2, 1, false);
         } catch (IOException e) {
             Log.error(SkillService.class, e);
         }

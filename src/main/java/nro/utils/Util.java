@@ -295,6 +295,35 @@ public class Util {
         return false;
     }
 
+
+    // Hệ số nhân tỉ lệ drop toàn server (mặc định = 1)
+    public static int ti_le_drop = 1;
+    
+    // Hệ số tăng khi dùng item Lucky (x2 tỉ lệ drop)
+    public static final float LUCKY_BONUS = 2.0f;
+
+  
+
+    /**
+     * Kiểm tra tỉ lệ drop với hệ số nhân + bonus Lucky của player
+     * @param ratio tỉ lệ cơ bản (tử số)
+     * @param typeRatio tổng số (mẫu số)
+     * @param player player để check item Lucky
+     * @return true nếu trúng tỉ lệ (đã nhân với ti_le_drop và Lucky bonus)
+     */
+    public static boolean isTrueDrop(int ratio, int typeRatio, nro.models.player.Player player) {
+        float actualRatio = ratio * ti_le_drop;
+        // Nếu player đang dùng item Lucky thì +50% tỉ lệ
+        if (player != null && player.itemTime != null && player.itemTime.isUseLucky) {
+            actualRatio *= LUCKY_BONUS;
+        }
+        if (actualRatio > typeRatio) {
+            actualRatio = typeRatio; // Không vượt quá 100%
+        }
+        int num = Util.nextInt(typeRatio);
+        return num < actualRatio;
+    }
+
     public static boolean haveSpecialCharacter(String text) {
         Pattern p = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
         Matcher m = p.matcher(text);

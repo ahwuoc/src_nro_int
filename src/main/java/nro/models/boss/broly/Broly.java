@@ -194,7 +194,6 @@ public class Broly extends Boss {
     private void resetPoint() {
         if (this.countResetPoint++ >= maxCountResetPoint && this.nPoint.hpMax < MAX_HP
                 && this.nPoint.getCurrPercentHP() < 80) {
-            // System.out.println("a");
             double min = Util.nextDouble(this.nPoint.hpMax * 0.14, this.nPoint.hpMax * 0.7);
             double max = Util.nextDouble(this.nPoint.hpMax * 0.2, this.nPoint.hpMax * 0.3);
             this.nPoint.hpMax += this.nPoint.getCurrPercentHP() < 50 ? max : min;

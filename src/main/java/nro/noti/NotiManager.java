@@ -34,9 +34,9 @@ public class NotiManager {
     }
 
     public void loadNoti() {
-        try {
+        try (java.sql.Connection con = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = con.prepareStatement("SELECT * FROM `notifications`")) {
             notifications.clear();
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM `notifications`");
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 Notification notification = new Notification();
@@ -45,24 +45,20 @@ public class NotiManager {
                 notification.setTitle(rs.getString("title"));
                 addNoti(notification);
             }
-            rs.close();
-            ps.close();
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
     }
 
     public void loadAlert() {
-        try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM `alert`");
+        try (java.sql.Connection con = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = con.prepareStatement("SELECT * FROM `alert`")) {
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 Alert a = new Alert();
                 a.content = rs.getString("content");
                 this.alert = a;
             }
-            rs.close();
-            ps.close();
         } catch (SQLException ex) {
             ex.printStackTrace();
         }

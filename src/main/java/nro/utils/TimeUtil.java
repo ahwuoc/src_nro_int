@@ -3,6 +3,7 @@ package nro.utils;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 /**
  *
@@ -11,6 +12,9 @@ import java.util.Date;
  *
  */
 public class TimeUtil {
+
+    // Timezone Việt Nam (UTC+7)
+    public static final TimeZone VIETNAM_TIMEZONE = TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
 
     public static final byte SECOND = 1;
     public static final byte MINUTE = 2;
@@ -62,18 +66,18 @@ public class TimeUtil {
     }
 
     public static int getCurrDay() {
-        Date date = new Date();
-        return date.getDay();
+        java.util.Calendar cal = java.util.Calendar.getInstance(VIETNAM_TIMEZONE);
+        return cal.get(java.util.Calendar.DAY_OF_WEEK);
     }
 
     public static int getCurrHour() {
-        Date date = new Date();
-        return date.getHours();
+        java.util.Calendar cal = java.util.Calendar.getInstance(VIETNAM_TIMEZONE);
+        return cal.get(java.util.Calendar.HOUR_OF_DAY);
     }
 
     public static int getCurrMin() {
-        Date date = new Date();
-        return date.getMinutes();
+        java.util.Calendar cal = java.util.Calendar.getInstance(VIETNAM_TIMEZONE);
+        return cal.get(java.util.Calendar.MINUTE);
     }
 
     public static String getTimeLeft(long lastTime, int secondTarget) {
@@ -121,6 +125,7 @@ public class TimeUtil {
 
     public static long getTime(String time, String format) throws Exception {
         SimpleDateFormat fm = new SimpleDateFormat(format);
+        fm.setTimeZone(VIETNAM_TIMEZONE); // Sử dụng timezone Việt Nam
         try {
             return fm.parse(time).getTime();
         } catch (ParseException ex) {
@@ -130,6 +135,7 @@ public class TimeUtil {
 
     public static String getTimeNow(String format) {
         SimpleDateFormat fm = new SimpleDateFormat(format);
+        fm.setTimeZone(VIETNAM_TIMEZONE); // Sử dụng timezone Việt Nam
         return fm.format(new Date());
     }
 
@@ -145,6 +151,7 @@ public class TimeUtil {
 
     public static String formatTime(Date time, String format) {
         SimpleDateFormat fm = new SimpleDateFormat(format);
+        fm.setTimeZone(VIETNAM_TIMEZONE); // Sử dụng timezone Việt Nam
         return fm.format(time);
     }
 

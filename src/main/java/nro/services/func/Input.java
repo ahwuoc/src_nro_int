@@ -1,9 +1,8 @@
 package nro.services.func;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import nro.ahwuocdz.ActivationSetData;
 import nro.consts.ConstNpc;
+import nro.consts.ItemClothesData;
 import nro.jdbc.daos.PlayerDAO;
 import nro.models.item.Item;
 import nro.models.map.Zone;
@@ -13,15 +12,11 @@ import nro.models.player.Player;
 import nro.server.Client;
 import nro.server.io.Message;
 import nro.services.*;
-import nro.services.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 import nro.consts.ConstItem;
-import nro.jdbc.DBService;
 import nro.models.item.ItemOption;
-import nro.models.player.Inventory;
 import nro.utils.Util;
 
 /**
@@ -131,15 +126,22 @@ public class Input {
                     break;
                 case DOI_THOI_VANG:
                     try {
-                        int soVang = Integer.parseInt(text[0]);
-                        if (soVang <= 0) {
-                            Service.getInstance().sendThongBao(player, "Số thỏi vàng không hợp lệ");
+                        int soTien = Integer.parseInt(text[0]);
+                        if (soTien <= 0) {
+                            Service.getInstance().sendThongBao(player, "Số tiền không hợp lệ");
                             return;
                         }
-                        int tongTien = soVang * 10;
-
-                        if (player.soDuVND < tongTien) {
-                            Service.getInstance().sendThongBao(player, "Bạn không đủ số Dư");
+                        if (soTien > 1_000_000) {
+                            Service.getInstance().sendThongBao(player, "Số tiền tối đa 1.000.000 VND");
+                            return;
+                        }
+                        int soVang = soTien / 20; // 1K VND = 50 TV => 20 VND = 1 TV
+                        if (soVang <= 0) {
+                            Service.getInstance().sendThongBao(player, "Số tiền quá ít, tối thiểu 20 VND");
+                            return;
+                        }
+                        if (player.getSession().vndBar < soTien) {
+                            Service.getInstance().sendThongBao(player, "Bạn không đủ số dư (cần " + soTien + " VND)");
                             return;
                         }
                         if (InventoryService.gI().getCountEmptyBag(player) <= 0) {
@@ -149,15 +151,13 @@ public class Input {
                         Item thoivang = ItemService.gI().createNewConsignmentItem((short) ConstItem.THOI_VANG, soVang);
                         thoivang.itemOptions.add(new ItemOption(73, 0));
                         InventoryService.gI().addItemBag(player, thoivang, 99999);
-                        PlayerDAO.subVndBar(player, tongTien);
-                        player.soDuVND -= tongTien;
+                        PlayerDAO.subVnd(player, soTien);
                         InventoryService.gI().sendItemBags(player);
-                        Service.getInstance().sendThongBao(player, "Bạn nhận được " + thoivang.getName());
+                        Service.getInstance().sendThongBao(player, "Bạn nhận được " + soVang + " thỏi vàng");
                     } catch (NumberFormatException e) {
                         Service.getInstance().sendThongBao(player, "Định dạng số không hợp lệ");
                     }
                     break;
-
                 case DOI_HONG_NGOC:
                     try {
                         int soLuong = Integer.parseInt(text[0]);
@@ -170,31 +170,28 @@ public class Input {
                             return;
                         }
                         int tongTien = soLuong;
-                        if (player.soDuVND < tongTien) {
+                        if (player.getSession().vndBar < tongTien) {
                             Service.getInstance().sendThongBao(player, "Bạn không đủ số Dư");
                             return;
                         }
                         player.inventory.ruby += tongTien;
-                        PlayerDAO.subVndBar(player, tongTien);
-                        player.soDuVND -= tongTien;
+                        PlayerDAO.subVnd(player, tongTien);
                         InventoryService.gI().sendItemBags(player);
                         Service.getInstance().sendMoney(player);
-
                         Service.getInstance().sendThongBao(player, "Bạn nhận được " + tongTien + " Hồng Ngọc");
                     } catch (NumberFormatException e) {
                         Service.getInstance().sendThongBao(player, "Định dạng số không hợp lệ");
                     }
-
                     break;
                 case CHANGE_NAME:
-                    if (player.soDuVND >= 50000) {
+                    if (player.getSession().vndBar >= 50000) {
                         Player plChanged = (Player) PLAYER_ID_OBJECT.get((int) player.id);
                         if (plChanged != null) {
                             // Kiểm tra xem tên mới có bị trùng không
                             if (PlayerDAO.isExistName(text[0])) {
                                 Service.getInstance().sendThongBao(player, "Tên nhân vật đã tồn tại");
                             } else {
-                                player.soDuVND -= 50000;
+                                PlayerDAO.subVnd(player, 50000);
                                 // Cập nhật tên người chơi
                                 plChanged.name = text[0];
                                 PlayerDAO.saveName(plChanged);
@@ -215,7 +212,7 @@ public class Input {
                         }
                     } else {
                         // Thông báo không đủ số dư
-                        Service.getInstance().sendThongBao(player, "Số dư tài khoản của con không đử");
+                        Service.getInstance().sendThongBao(player, "Số dư tài khoản của con không đủ (cần 50.000 VND)");
                     }
                     break;
                 case CHOOSE_LEVEL_BDKB: {
@@ -323,33 +320,33 @@ public class Input {
                     String skh = (text[1]);
                     int mon = Integer.parseInt((text[2]));
                     int gender = 0;
-                    int[] idOption = null;
-
+                    ActivationSetData setData = null;
                     if (skh.equalsIgnoreCase("sgk")) {
                         gender = 0;
-                        idOption = RewardService.ACTIVATION_SET[gender][0];
+                        setData = ActivationSetData.get(gender, 0);
                     } else if (skh.equalsIgnoreCase("lienhoan") || skh.equalsIgnoreCase("ki")) {
                         gender = 1;
                         if (skh.equalsIgnoreCase("lienhoan")) {
-                            idOption = RewardService.ACTIVATION_SET[gender][0];
+                            setData = ActivationSetData.get(gender, 0);
                         } else if (skh.equalsIgnoreCase("ki")) {
-                            idOption = RewardService.ACTIVATION_SET[gender][2];
+                            setData = ActivationSetData.get(gender, 2);
                         }
                     } else if (skh.equalsIgnoreCase("hp") || skh.equals("galick")) {
                         gender = 2;
                         if (skh.equalsIgnoreCase("hp")) {
-                            idOption = RewardService.ACTIVATION_SET[gender][0];
+                            setData = ActivationSetData.get(gender, 0);
                         } else if (skh.equalsIgnoreCase("galick")) {
-                            idOption = RewardService.ACTIVATION_SET[gender][1];
+                            setData = ActivationSetData.get(gender, 1);
                         }
                     }
 
+                    ItemClothesData.ClothesSet clothes = ItemClothesData.getClothes(gender, mon + 1);
                     Item itemSKH = ItemService.gI()
-                            .createNewItem((short) ConstItem.LIST_ITEM_CLOTHES[gender][mon][0]);
+                            .createNewItem((short) (clothes != null ? clothes.getAo() : 0));
                     RewardService.gI().initBaseOptionClothes(itemSKH.template.id, itemSKH.template.type,
                             itemSKH.itemOptions);
-                    itemSKH.itemOptions.add(new ItemOption(idOption[0], 1)); // tên set
-                    itemSKH.itemOptions.add(new ItemOption(idOption[1], 100)); // hiệu ứng set
+                    itemSKH.itemOptions.add(new ItemOption(setData.getOptionId(), 1)); // tên set
+                    itemSKH.itemOptions.add(new ItemOption(setData.getEffectId(), 100)); // hiệu ứng set
                     itemSKH.itemOptions.add(new ItemOption(30, 0)); // không thể giao dịch
                     itemSKH.itemOptions.add(new ItemOption(73, 0));
 
@@ -363,23 +360,16 @@ public class Input {
 
                 case ADD_ITEM:
                     short id = Short.parseShort((text[0]));
-                    int quantity = Integer.parseInt(text[1]);
-
+                    int quantity = 1;
+                    quantity = Integer.parseInt(text[1]);
                     if (player != null) {
-                        if (id < 555 || (id > 568 && id < 650) || id > 662) {
-                            Item item = ItemService.gI().createNewItem(((short) id));
-                            if (id == 381 || id == 382 || id == 383) {
-                                item.quantity = quantity;
-                            } else {
-                                item.quantity = 1;
-                            }
-                            InventoryService.gI().addItemBag(player, item, 0);
-                            InventoryService.gI().sendItemBags(player);
-                            Service.getInstance().sendThongBao(player,
-                                    "Bạn nhận được " + item.template.name + " Số lượng: " + quantity);
-                        } else {
-                            Service.gI().sendThongBaoOK(player, "Vui lòng nhập lại");
-                        }
+                        Item item = ItemService.gI().createNewItem(((short) id));
+                        item.quantity = quantity;
+                        InventoryService.gI().addItemBag(player, item, 0);
+                        InventoryService.gI().sendItemBags(player);
+                        Service.getInstance().sendThongBao(player,
+                                "Bạn nhận được " + item.template.name + " Số lượng: " + quantity);
+
                     }
             }
         } catch (Exception e) {
@@ -430,7 +420,7 @@ public class Input {
     }
 
     public void createFormDoiThoiVang(Player pl) {
-        createForm(pl, DOI_THOI_VANG, "1K VNĐ = 100 TV", new SubInput("Nhập Số TV Muốn Đổi", NUMERIC));
+        createForm(pl, DOI_THOI_VANG, "1K VNĐ = 50 TV", new SubInput("Nhập Số VND Muốn Đổi", NUMERIC));
     }
 
     public void createFormDoiHongNgoc(Player pl) {

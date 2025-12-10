@@ -201,23 +201,46 @@ public abstract class AbsResources {
     }
 
     public byte[] getRawIconData(int zoomLevel, int iconID) {
-        return readAllBytes("/image/" + zoomLevel + "/icon/" + iconID + ".png");
+        return getScaledImage("/image/" + zoomLevel + "/icon/" + iconID + ".png", zoomLevel);
     }
 
     public byte[] getRawBGData(int zoomLevel, int bg) {
-        return readAllBytes("/image/" + zoomLevel + "/bg/" + bg + ".png");
+        return getScaledImage("/image/" + zoomLevel + "/bg/" + bg + ".png", zoomLevel);
     }
 
     public byte[] getRawIBNData(int zoomLevel, String filename) {
-        return readAllBytes("/image/" + zoomLevel + "/imgbyname/" + filename + ".png");
+        return getScaledImage("/image/" + zoomLevel + "/imgbyname/" + filename + ".png", zoomLevel);
     }
 
     public byte[] getRawMobData(int zoomLevel, int id) {
-        return readAllBytes("/image/" + zoomLevel + "/monster/" + id + ".png");
+        return getScaledImage("/image/" + zoomLevel + "/monster/" + id + ".png", zoomLevel);
     }
 
     public byte[] getRawEffectData(int zoomLevel, int id) {
-        return readAllBytes("/image/" + zoomLevel + "/effect/" + id + ".png");
+        return getScaledImage("/image/" + zoomLevel + "/effect/" + id + ".png", zoomLevel);
+    }
+    
+    /**
+     * Lấy ảnh và tự động scale từ x4 nếu cần
+     * Ưu tiên: Đọc file zoom level yêu cầu -> Nếu không có thì scale từ x4
+     */
+    private byte[] getScaledImage(String path, int zoomLevel) {
+        // Thử đọc file ở zoom level yêu cầu trước
+        byte[] data = readAllBytes(path);
+        if (data.length > 0) {
+            return data; // Có file sẵn, dùng luôn
+        }
+        
+        // Không có file, thử scale từ x4
+        if (zoomLevel < 4) {
+            String x4Path = path.replace("/image/" + zoomLevel + "/", "/image/4/");
+            byte[] x4Data = readAllBytes(x4Path);
+            if (x4Data.length > 0) {
+                return nro.utils.ImageScaler.scaleImage(x4Data, zoomLevel);
+            }
+        }
+        
+        return new byte[0]; // Không tìm thấy
     }
 
     public void putData(String key, byte[] data) {

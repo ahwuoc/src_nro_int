@@ -446,8 +446,7 @@ public class MapService {
         return mapId >= 63 && mapId <= 83;
     }
 
-    public boolean isMapCold(Map map) {
-        int mapId = map.mapId;
+    public boolean isMapCold(int mapId) {
         return mapId >= 105 && mapId <= 110;
     }
 

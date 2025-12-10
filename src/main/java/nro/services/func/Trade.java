@@ -88,9 +88,7 @@ public class Trade {
     }
 
     public void addItemTrade(Player pl, byte index, int quantity) {
-        // System.out.println("quantity: " + quantity);
         if (pl.getSession().actived) {
-            // if (pl.nPoint.power >= 40_000_000_000L) {
             if (index == -1) {
                 if (pl.equals(this.player1)) {
                     goldTrade1 = quantity;

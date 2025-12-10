@@ -25,8 +25,8 @@ public class AchiveManager implements IManager<AchivementTemplate> {
     private List<AchivementTemplate> list = new ArrayList<>();
 
     public void load() {
-        try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM `achivements`");
+        try (java.sql.Connection con = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = con.prepareStatement("SELECT * FROM `achivements`")) {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 int id = rs.getInt("id");
@@ -36,8 +36,6 @@ public class AchiveManager implements IManager<AchivementTemplate> {
                 int maxCount = rs.getInt("max_count");
                 list.add(new AchivementTemplate(id,name,detail,money,maxCount));
             }
-            rs.close();
-            ps.close();
         } catch (SQLException ex) {
             ex.printStackTrace();
         }

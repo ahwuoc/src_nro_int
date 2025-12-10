@@ -553,7 +553,6 @@ public class EffectSkin {
             msg = new Message(-45);
             msg.writer().writeByte(7);
             msg.writer().writeInt((int) player.id);
-            // msg.writer().writeShort(player.playerSkill.skillSelect.skillId);
             msg.writer().writeShort(104);
             msg.writer().writeShort(affterMiliseconds);
             Service.getInstance().sendMessAllPlayerInMap(player, msg);
