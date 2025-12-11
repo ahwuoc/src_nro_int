@@ -39,6 +39,7 @@ import nro.manager.TopManager;
 import nro.models.map.DaiHoiVoThuat.DaiHoiVoThuatService;
 import nro.models.map.VoDaiSinhTu.VoDaiSinhTuManager;
 import nro.models.map.phoban.KhiGas;
+import nro.bot.BotManager;
 
 public class ServerManager {
 
@@ -348,11 +349,6 @@ public class ServerManager {
         ScheduledExecutorService autoTopPower = Executors.newScheduledThreadPool(1);
         autoTopPower.scheduleWithFixedDelay(() -> {
             TopManager.getInstance().loadTopNangDong();
-            // TopManager.getInstance().loadTopVnd();
-            // TopPowerManager.getInstance().load();
-            // TopRichManManager.getInstance().load();
-            // TopKillWhisManager.getInstance().load();
-            // TopBanDoKhoBau.getInstance().load();
         }, 0, 600000, TimeUnit.MILLISECONDS);
 
         // Update Địa Cung mỗi 5 giây

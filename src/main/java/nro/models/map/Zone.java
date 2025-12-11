@@ -372,8 +372,11 @@ public class Zone {
     }
 
     public void pickItem(Player player, int itemMapId) {
+        System.out.println("[Zone.pickItem] Player: " + player.name + ", isBot: " + player.isBot + ", itemMapId: " + itemMapId);
+        
         ItemMap itemMap = getItemMapByItemMapId(itemMapId);
         if (itemMap == null) {
+            System.out.println("[Zone.pickItem] ItemMap is null!");
             Service.getInstance().sendThongBao(player, "Không thể thực hiện");
             return;
         }
@@ -388,8 +391,8 @@ public class Zone {
                 return;
             }
 
-            // Kiểm tra người chơi có quyền nhặt
-            if (itemMap.playerId != player.id && itemMap.playerId != -1 && itemMap.itemTemplate.id != 78) {
+            // Kiểm tra người chơi có quyền nhặt (Bot được phép nhặt mọi item)
+            if (!player.isBot && itemMap.playerId != player.id && itemMap.playerId != -1 && itemMap.itemTemplate.id != 78) {
                 Service.getInstance().sendThongBao(player, "Không thể nhặt vật phẩm của người khác");
                 return;
             }
@@ -415,7 +418,10 @@ public class Zone {
             int maxQuantity = ItemService.gI().isItemNoLimitQuantity(item.template.id) ? 99999 : 0;
 
             boolean picked = InventoryService.gI().addItemBag(player, item, maxQuantity);
+            System.out.println("[Zone.pickItem] addItemBag result: " + picked);
+            
             if (!picked) {
+                System.out.println("[Zone.pickItem] Failed to add item to bag!");
                 if (!ItemMapService.gI().isBlackBall(item.template.id)) {
                     Service.getInstance().sendThongBao(player, "Hành trang không còn chỗ trống");
                 }
@@ -427,6 +433,7 @@ public class Zone {
                 itemMap.isPickedUp = true;
             }
 
+            System.out.println("[Zone.pickItem] Calling sendPickupMessage, player.isBot=" + player.isBot);
             sendPickupMessage(player, itemMap, item, itemMapId);
 
             // Xoá item khỏi bản đồ nếu không nằm trong vùng đặc biệt
@@ -489,10 +496,30 @@ public class Zone {
             }
 
             msg.writer().writeShort(item.quantity);
-            player.sendMessage(msg);
-            msg.cleanup();
-
-            Service.getInstance().sendToAntherMePickItem(player, itemMapId);
+            
+            // Nếu là bot, gửi message cho tất cả người chơi trong zone
+            if (player.isBot) {
+                // Gửi thủ công cho từng player (bot không có session)
+                msg.transformData();
+                List<Player> players = this.getPlayers();
+                int sentCount = 0;
+                synchronized (players) {
+                    for (Player pl : players) {
+                        if (pl != null && !pl.isBot) {
+                            pl.sendMessage(msg);
+                            sentCount++;
+                        }
+                    }
+                }
+                msg.cleanup();
+                System.out.println("[Zone] Bot pickup message sent to " + sentCount + " players");
+                // Gửi thông báo item biến mất cho các player khác
+                Service.getInstance().sendToAntherMePickItem(player, itemMapId);
+            } else {
+                player.sendMessage(msg);
+                msg.cleanup();
+                Service.getInstance().sendToAntherMePickItem(player, itemMapId);
+            }
         } catch (Exception e) {
             Log.error(Zone.class, e);
         }
@@ -639,9 +666,14 @@ public class Zone {
         }
 
         Service.getInstance().sendFlagPlayerToMe(plReceive, plInfo);
-        if (plInfo.isPl() && plInfo.inventory.itemsBody.get(12).isNotNullItem()) {
+        // Send title for normal players (from item slot 12)
+        if (plInfo.isPl() && !plInfo.isBot && plInfo.inventory != null && plInfo.inventory.itemsBody != null && plInfo.inventory.itemsBody.size() > 12 && plInfo.inventory.itemsBody.get(12).isNotNullItem()) {
             Service.getInstance().sendTitleRv1(plInfo, plReceive,
                     (short) (plInfo.inventory.itemsBody.get(12).template.part));
+        }
+        // Send title for bots (from partDanhHieu)
+        if (plInfo.isBot && plInfo.titleitem && plInfo.partDanhHieu > 0) {
+            Service.getInstance().sendTitleRv1(plInfo, plReceive, plInfo.partDanhHieu);
         }
         try {
             if (plInfo.isDie()) {

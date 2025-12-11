@@ -28,6 +28,7 @@ nro/manager/KiGuiManager.class
 nro/models/boss/tieudoisatthu/So2.class
 nro/models/npc/NpcFactory$6.class
 nro/models/item/ItemReward.class
+nro/bot/BotConfig.class
 nro/services/NpcService.class
 nro/models/boss/mabu_war/Drabula_Tang1.class
 nro/models/boss/fide/FideGold.class
@@ -292,6 +293,7 @@ nro/models/npc/NpcFactory$19.class
 nro/models/boss/boss_doanh_trai/TrungUyXanhLo.class
 nro/models/map/ItemMap.class
 nro/ahwuocdz/constant/ItemConstantLoader.class
+nro/bot/BotManager.class
 nro/models/boss/td/Onggianoel.class
 nro/models/boss/cold/Cooler.class
 nro/models/boss/dhvt/Xinbato.class
@@ -370,6 +372,7 @@ nro/models/boss/cell/XenCon5.class
 nro/consts/ConstRatio.class
 nro/models/task/TaskPlayer.class
 nro/models/npc/NpcFactory$38.class
+nro/bot/models/Bot.class
 nro/models/npc/NpcFactory$41.class
 nro/models/npc/IAtionNpc.class
 nro/models/map/VoDaiSinhTu/VoDaiSinhTuService.class

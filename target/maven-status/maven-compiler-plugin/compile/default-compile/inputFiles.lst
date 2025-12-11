@@ -13,6 +13,9 @@
 /home/ahwuocdz/Ahwuocdz_Src/src_nro_int/src/main/java/nro/attr/AttributeManager.java
 /home/ahwuocdz/Ahwuocdz_Src/src_nro_int/src/main/java/nro/attr/AttributeTemplate.java
 /home/ahwuocdz/Ahwuocdz_Src/src_nro_int/src/main/java/nro/attr/AttributeTemplateManager.java
+/home/ahwuocdz/Ahwuocdz_Src/src_nro_int/src/main/java/nro/bot/BotConfig.java
+/home/ahwuocdz/Ahwuocdz_Src/src_nro_int/src/main/java/nro/bot/BotManager.java
+/home/ahwuocdz/Ahwuocdz_Src/src_nro_int/src/main/java/nro/bot/models/Bot.java
 /home/ahwuocdz/Ahwuocdz_Src/src_nro_int/src/main/java/nro/card/Card.java
 /home/ahwuocdz/Ahwuocdz_Src/src_nro_int/src/main/java/nro/card/CardManager.java
 /home/ahwuocdz/Ahwuocdz_Src/src_nro_int/src/main/java/nro/card/CardTemplate.java

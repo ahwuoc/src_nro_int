@@ -741,6 +741,35 @@ public class Service {
                 }
 
             }
+            // Bot commands: bot_create [type] [quantity]
+            // Types: 1=farm_mob, 2=farm_boss, 3=talk_npc, 4=shop_npc
+            if (text.startsWith("bot_create ")) {
+                try {
+                    String[] parts = text.replace("bot_create ", "").split(" ");
+                    int type = Integer.parseInt(parts[0]);
+                    int quantity = parts.length > 1 ? Integer.parseInt(parts[1]) : 1;
+                    nro.bot.BotManager.gI().createBots(type, quantity);
+                    sendThongBao(player, "Đã tạo " + quantity + " bot loại " + type);
+                } catch (Exception e) {
+                    sendThongBao(player, "Lệnh: bot_create [type] [số lượng]\nType: 1=farm, 2=boss, 3=npc, 4=shop");
+                }
+            }
+            if (text.startsWith("bot_remove ")) {
+                try {
+                    int type = Integer.parseInt(text.replace("bot_remove ", ""));
+                    nro.bot.BotManager.gI().removeBotsByType(type);
+                    sendThongBao(player, "Đã xóa bot loại " + type);
+                } catch (Exception e) {
+                    sendThongBao(player, "Lệnh: bot_remove [type]");
+                }
+            }
+            if (text.equals("bot_clear")) {
+                nro.bot.BotManager.gI().removeAllBots();
+                sendThongBao(player, "Đã xóa tất cả bot");
+            }
+            if (text.equals("bot_status")) {
+                sendThongBao(player, nro.bot.BotManager.gI().getStatusSummary());
+            }
             if (text.equals("baotri_")) {
                 int giay = Integer.getInteger(text.replaceAll("baotri_", ""));
                 try {

@@ -107,6 +107,7 @@ public class Player {
 
     public long timeFixInventory;
     public boolean isPet;
+    public boolean isBot;
     public boolean isBoss;
     public boolean isMiniPet;
 
@@ -623,8 +624,6 @@ public class Player {
     public void send_text_time_nhan_bua_mien_phi() {
         if (Util.canDoWithTime(lastTimeSendTextTime, 60000)) {
             if (this.event.luotNhanBuaMienPhi == 1) {
-                // ItemTimeService.gI().sendTextTime(this, TEXT_NHAN_BUA_MIEN_PHI, "Website
-                // chính thức tại www.nronotbuff.com", 30);
             }
             lastTimeSendTextTime = System.currentTimeMillis();
         }
@@ -826,23 +825,6 @@ public class Player {
             if (fusion.typeFusion == ConstPlayer.LUONG_LONG_NHAT_THE) {
                 return idOutfitFusion[this.gender == ConstPlayer.NAMEC ? 2 : 0][1];
             } else if (fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-                // if (this.pet.isMabu) {
-                // return idOutfitFusion[3 + this.gender][1];
-                // }
-                // if (this.pet.isBulo) {
-                // if (this.inventory.itemsBody.get(5).isNotNullItem()) {
-                // if (this.inventory.itemsBody.get(5).template.id == 1305) {
-                // return 1389;
-                // }
-                // }
-                // }
-                // if (this.pet.isCellBao) {
-                // if (this.inventory.itemsBody.get(5).isNotNullItem()) {
-                // if (this.inventory.itemsBody.get(5).template.id == 1304) {
-                // return 1389;
-                // }
-                // }
-                // }
                 return idOutfitFusion[this.gender == ConstPlayer.NAMEC ? 2 : 1][1];
             } else if (fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
                 return idOutfitFusion[3 + this.gender][1];
@@ -897,23 +879,6 @@ public class Player {
             if (fusion.typeFusion == ConstPlayer.LUONG_LONG_NHAT_THE) {
                 return idOutfitFusion[this.gender == ConstPlayer.NAMEC ? 2 : 0][2];
             } else if (fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-                // if (this.pet.isMabu) {
-                // return idOutfitFusion[3 + this.gender][2];
-                // }
-                // if (this.pet.isBulo) {
-                // if (this.inventory.itemsBody.get(5).isNotNullItem()) {
-                // if (this.inventory.itemsBody.get(5).template.id == 1305) {
-                // return 1390;
-                // }
-                // }
-                // }
-                // if (this.pet.isCellBao) {
-                // if (this.inventory.itemsBody.get(5).isNotNullItem()) {
-                // if (this.inventory.itemsBody.get(5).template.id == 1304) {
-                // return 1390;
-                // }
-                // }
-                // }
                 return idOutfitFusion[this.gender == ConstPlayer.NAMEC ? 2 : 1][2];
             } else if (fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
                 return idOutfitFusion[3 + this.gender][2];

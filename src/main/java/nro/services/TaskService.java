@@ -500,6 +500,11 @@ public class TaskService {
             nro.services.task.TaskDeTy.gI().onKillMob(player, mob.tempId);
         }
         
+        // Skip task check for bots or players without task
+        if (player.playerTask == null || player.playerTask.taskMain == null) {
+            return;
+        }
+        
         if (!player.isBoss && !player.isPet) {
             switch (mob.tempId) {
                 case ConstMob.MOC_NHAN:
@@ -639,6 +644,9 @@ public class TaskService {
 
     // xong nhiệm vụ nào đó
     public boolean doneTask(Player player, int idTaskCustom) {
+        if (player.playerTask == null || player.playerTask.taskMain == null) {
+            return false;
+        }
         if (TaskService.gI().isCurrentTask(player, idTaskCustom)) {
             this.addDoneSubTask(player, 1);
             switch (idTaskCustom) {
@@ -1548,6 +1556,9 @@ public class TaskService {
     }
 
     public boolean isCurrentTask(Player player, int idTaskCustom) {
+        if (player.playerTask == null || player.playerTask.taskMain == null) {
+            return false;
+        }
         switch (idTaskCustom) {
             case ConstTask.TASK_0_0:
                 return player.playerTask.taskMain.id == 0 && player.playerTask.taskMain.index == 0;
