@@ -9,6 +9,9 @@ import nro.utils.Util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages all bots in the game.
@@ -19,21 +22,32 @@ public class BotManager {
     private final ConcurrentHashMap<Long, Bot> bots;
     private long nextBotId = -1000;
     
+    // Scheduler for async bot operations
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
+    
     // Bot lists by type
     private final List<Bot> botsFarmMob = new ArrayList<>();
     private final List<Bot> botsFarmBoss = new ArrayList<>();
-    private final List<Bot> botsTalkNpc = new ArrayList<>();
-    private final List<Bot> botsShopNpc = new ArrayList<>();
+    private final List<Bot> botsNpcVisitor = new ArrayList<>();
+    private final List<Bot> botsAfk = new ArrayList<>();
     
     // Bot type constants
     public static final int TYPE_FARM_MOB = 1;
     public static final int TYPE_FARM_BOSS = 2;
-    public static final int TYPE_TALK_NPC = 3;
-    public static final int TYPE_SHOP_NPC = 4;
+    public static final int TYPE_NPC_VISITOR = 3;
+    public static final int TYPE_AFK = 4;
     
-    // Name prefixes
-    private static final String[] NAME_PREFIXES = {"", "Hunter_", "BossKiller_", "Visitor_", "Shopper_"};
-    private static final String[] NAME_SUFFIXES = {"Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Kappa"};
+    // Combined name list from BOT_NAMES and BOT_NAME_PREFIXES
+    private static String[] getAllBotNames() {
+        String[] prefixes = BotConfig.BOT_NAME_PREFIXES;
+        String[] names = BotConfig.BOT_NAME;
+        String[] combined = new String[prefixes.length + names.length];
+        System.arraycopy(prefixes, 0, combined, 0, prefixes.length);
+        System.arraycopy(names, 0, combined, prefixes.length, names.length);
+        return combined;
+    }
+    
+    private static final String[] BOT_NAMES = getAllBotNames();
 
     private BotManager() {
         bots = new ConcurrentHashMap<>();
@@ -46,17 +60,39 @@ public class BotManager {
         return instance;
     }
     
+    // Track used names to avoid duplicates
+    private final java.util.Set<String> usedNames = new java.util.HashSet<>();
+    
     private String generateBotName(int type, int index) {
-        String prefix = NAME_PREFIXES[type];
-        return prefix + NAME_SUFFIXES[index % NAME_SUFFIXES.length] + (index / 10 > 0 ? String.valueOf(index / 10) : "");
+        // 70% chance to use real name, 30% chance to use prefix + name
+        if (Util.nextInt(1, 100) <= 70) {
+            // Pick random unused name
+            for (int attempt = 0; attempt < 50; attempt++) {
+                String name = BOT_NAMES[Util.nextInt(0, BOT_NAMES.length - 1)];
+                if (!usedNames.contains(name)) {
+                    usedNames.add(name);
+                    return name;
+                }
+            }
+        }
+        
+        // Fallback: prefix + random name + optional number
+        String[] prefixes = {"", "pro", "vip", "x", "z", "k", "m"};
+        String prefix = prefixes[Util.nextInt(0, prefixes.length - 1)];
+        String baseName = BOT_NAMES[Util.nextInt(0, BOT_NAMES.length - 1)];
+        String suffix = Util.nextInt(1, 100) <= 30 ? String.valueOf(Util.nextInt(1, 99)) : "";
+        
+        String name = prefix + baseName + suffix;
+        usedNames.add(name);
+        return name;
     }
     
     private List<Bot> getTypeList(int type) {
         switch (type) {
             case TYPE_FARM_MOB: return botsFarmMob;
             case TYPE_FARM_BOSS: return botsFarmBoss;
-            case TYPE_TALK_NPC: return botsTalkNpc;
-            case TYPE_SHOP_NPC: return botsShopNpc;
+            case TYPE_NPC_VISITOR: return botsNpcVisitor;
+            case TYPE_AFK: return botsAfk;
             default: return new ArrayList<>();
         }
     }
@@ -65,56 +101,51 @@ public class BotManager {
         switch (type) {
             case TYPE_FARM_MOB: return "FARM_MOB";
             case TYPE_FARM_BOSS: return "FARM_BOSS";
-            case TYPE_TALK_NPC: return "TALK_NPC";
-            case TYPE_SHOP_NPC: return "SHOP_NPC";
+            case TYPE_NPC_VISITOR: return "NPC_VISITOR";
+            case TYPE_AFK: return "AFK";
             default: return "UNKNOWN";
         }
     }
     
     /**
-     * Create bots by type and quantity
+     * Create bots by type and quantity with async scheduling
+     * Each bot is created with random delay to prevent sync behavior
      */
     public List<Bot> createBots(int type, int quantity) {
         List<Bot> createdBots = new ArrayList<>();
+        final int botType = type; // Make type final for lambda capture
         
         for (int i = 0; i < quantity; i++) {
-            byte gender = (byte) (i % 3);
-            String name = generateBotName(type, getTypeList(type).size() + i);
+            final int index = i;
+            final byte gender = (byte) (i % 3);
+            final String name = generateBotName(botType, getTypeList(botType).size() + i);
             
-            Bot bot = createBotInternal(name, gender);
-            if (bot != null) {
-                createdBots.add(bot);
-                getTypeList(type).add(bot);
-                
-                // Random delay for each bot (0-10 seconds) to prevent sync movement
-                int randomDelay = Util.nextInt(0, 10000);
-                
-                switch (type) {
-                    case TYPE_FARM_MOB:
-                        spawnBotAtPlanet(bot);
-                        // Set random hunting start time so bots don't move together
-                        bot.setHuntingStartTimeOffset(randomDelay);
-                        bot.startHunting();
-                        break;
-                    case TYPE_FARM_BOSS:
-                        bot.startAttackBoss();
-                        break;
-                    case TYPE_TALK_NPC:
-                        bot.startTalkNpc(5, nro.consts.ConstNpc.BA_HAT_MIT);
-                        break;
-                    case TYPE_SHOP_NPC:
-                        bot.startShoppingAtNpc(5, nro.consts.ConstNpc.SANTA, nro.consts.ConstNpc.SANTA);
-                        break;
+            // Random delay 0-3 seconds for each bot to prevent sync
+            int delayMs = Util.nextInt(0, 3000) * index / Math.max(1, quantity);
+            
+            scheduler.schedule(() -> {
+                try {
+                    Bot bot = createBotInternal(name, gender, botType);
+                    if (bot != null) {
+                        synchronized (createdBots) {
+                            createdBots.add(bot);
+                        }
+                        getTypeList(botType).add(bot);
+                        initializeBotByType(bot, botType);
+                    }
+                } catch (Exception e) {
+                    System.err.println("[BotManager] Error creating bot " + name + ": " + e.getMessage());
                 }
-            }
+            }, delayMs, TimeUnit.MILLISECONDS);
         }
         
-        System.out.println("[BotManager] Created " + createdBots.size() + " bots of type " + getTypeName(type));
+        System.out.println("[BotManager] Scheduling " + quantity + " bots of type " + getTypeName(botType));
         return createdBots;
     }
     
     /**
      * Spawn bot at its planet based on gender
+     * Finds the least populated zone in the starting map
      */
     private void spawnBotAtPlanet(Bot bot) {
         int[] startMaps = {0, 7, 14}; // Trái Đất, Namek, Xayda
@@ -122,23 +153,55 @@ public class BotManager {
         int x = Util.nextInt(100, 400);
         int y = 336;
         
-        Zone zone = MapService.gI().getZoneJoinByMapIdAndZoneId(bot, mapId, 0);
+        // Find least populated zone
+        Zone zone = findLeastPopulatedZone(mapId);
+        if (zone == null) {
+            // Fallback to default zone 0
+            zone = MapService.gI().getZoneJoinByMapIdAndZoneId(bot, mapId, 0);
+        }
         
         if (zone != null) {
             bot.location.x = x;
             bot.location.y = y;
             MapService.gI().goToMap(bot, zone);
             zone.load_Me_To_Another(bot);
-            System.out.println("[BotManager] Spawned " + bot.name + " (gender " + bot.gender + ") at map " + zone.map.mapId);
+            System.out.println("[BotManager] Spawned " + bot.name + " (gender " + bot.gender + ") at map " + zone.map.mapId + " zone " + zone.zoneId + " (" + zone.getPlayers().size() + " players)");
         } else {
             System.err.println("[BotManager] Failed to find zone for map " + mapId);
         }
+    }
+    
+    /**
+     * Find the least populated zone in a map
+     * @param mapId Map ID to search
+     * @return Zone with fewest players, or null if map not found
+     */
+    private Zone findLeastPopulatedZone(int mapId) {
+        nro.models.map.Map map = MapService.gI().getMapById(mapId);
+        if (map == null || map.zones == null) {
+            return null;
+        }
+        
+        Zone bestZone = null;
+        int minPlayers = Integer.MAX_VALUE;
+        
+        for (Zone z : map.zones) {
+            if (z != null) {
+                int playerCount = z.getPlayers().size();
+                if (playerCount < minPlayers) {
+                    minPlayers = playerCount;
+                    bestZone = z;
+                }
+            }
+        }
+        
+        return bestZone;
     }
 
     /**
      * Create bot internally
      */
-    private Bot createBotInternal(String name, byte gender) {
+    private Bot createBotInternal(String name, byte gender, int type) {
         Bot bot = new Bot(name, gender);
         bot.id = nextBotId--;
 
@@ -149,6 +212,12 @@ public class BotManager {
         bot.nPoint.stamina = 1000;
         bot.nPoint.maxStamina = 1000;
         
+        // Initialize itemsBody (equipped items) - 6 slots: armor, pants, gloves, shoes, weapon, outfit
+        for (int i = 0; i < 6; i++) {
+            bot.inventory.itemsBody.add(ItemService.gI().createItemNull());
+        }
+        
+        // Initialize itemsBag (inventory bag)
         for (int i = 0; i < 20; i++) {
             bot.inventory.itemsBag.add(ItemService.gI().createItemNull());
         }
@@ -156,11 +225,24 @@ public class BotManager {
         initializeBotSkills(bot, gender);
         bots.put(bot.id, bot);
         
-        if (BotConfig.BOT_HAS_PET) {
+        // Check if this bot type should have pet
+        boolean shouldHavePet = switch (type) {
+            case TYPE_FARM_MOB -> BotConfig.FARM_MOB_HAS_PET;
+            case TYPE_FARM_BOSS -> BotConfig.FARM_BOSS_HAS_PET;
+            case TYPE_AFK -> BotConfig.AFK_BOT_HAS_PET; // AFK bot always has pet
+            default -> BotConfig.BOT_HAS_PET;
+        };
+        
+        if (shouldHavePet) {
             new Thread(() -> {
                 try {
                     Thread.sleep(2000);
                     bot.createBotPet();
+                    // Start auto fusion after pet is created
+                    Thread.sleep(1500); // Wait for pet to fully initialize
+                    if (BotConfig.BOT_AUTO_FUSION && bot.hasPet()) {
+                        bot.startAutoFusion();
+                    }
                 } catch (Exception e) {}
             }).start();
         }
@@ -225,7 +307,7 @@ public class BotManager {
                     nro.models.skill.Skill skill = new nro.models.skill.Skill();
                     skill.template = template;
                     skill.point = 7;
-                    skill.coolDown = 500;
+                    skill.coolDown = BotConfig.BOSS_SKILL_COOLDOWN;
                     skill.skillId = template.id;
                     bot.playerSkill.skills.add(skill);
                 }
@@ -234,8 +316,6 @@ public class BotManager {
             if (!bot.playerSkill.skills.isEmpty()) {
                 bot.playerSkill.skillSelect = bot.playerSkill.skills.get(0);
             }
-            
-            System.out.println("[BotManager] Bot " + bot.name + " upgraded with " + bot.playerSkill.skills.size() + " full skills");
         } catch (Exception e) {}
     }
 
@@ -254,8 +334,8 @@ public class BotManager {
         if (bot != null) {
             botsFarmMob.remove(bot);
             botsFarmBoss.remove(bot);
-            botsTalkNpc.remove(bot);
-            botsShopNpc.remove(bot);
+            botsNpcVisitor.remove(bot);
+            botsAfk.remove(bot);
             bot.dispose();
         }
     }
@@ -283,13 +363,77 @@ public class BotManager {
         bots.clear();
         botsFarmMob.clear();
         botsFarmBoss.clear();
-        botsTalkNpc.clear();
-        botsShopNpc.clear();
+        botsNpcVisitor.clear();
+        botsAfk.clear();
         System.out.println("[BotManager] Removed all bots");
     }
     
     public String getStatusSummary() {
-        return String.format("Bots: %d total (Farm:%d, Boss:%d, NPC:%d, Shop:%d)",
-            bots.size(), botsFarmMob.size(), botsFarmBoss.size(), botsTalkNpc.size(), botsShopNpc.size());
+        return String.format("Bots: %d total (Farm:%d, Boss:%d, NpcVisitor:%d, AFK:%d)",
+            bots.size(), botsFarmMob.size(), botsFarmBoss.size(), botsNpcVisitor.size(), botsAfk.size());
+    }
+    
+    /**
+     * Get formatted bot statistics text for admin menu display.
+     * Uses color codes for display formatting.
+     * @return Formatted string with total count and per-type counts
+     */
+    public String getBotStatisticsText() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("|7|-----Bot Statistics-----\n");
+        sb.append("|1|Tổng số Bot: ").append(getTotalBotCount()).append("\n");
+        sb.append("|2|Farm Mob: ").append(getBotCount(TYPE_FARM_MOB)).append("\n");
+        sb.append("|3|Farm Boss: ").append(getBotCount(TYPE_FARM_BOSS)).append("\n");
+        sb.append("|4|NPC Visitor: ").append(getBotCount(TYPE_NPC_VISITOR)).append("\n");
+        sb.append("|5|AFK: ").append(getBotCount(TYPE_AFK));
+        return sb.toString();
+    }
+    
+    /**
+     * Initialize bot based on its type
+     * Spawns bot at appropriate location and sets up type-specific behavior
+     */
+    private void initializeBotByType(Bot bot, int type) {
+        try {
+            switch (type) {
+                case TYPE_FARM_MOB:
+                    spawnBotAtPlanet(bot);
+                    bot.equipFarmMobOutfit();
+                    bot.startHunting();
+                    bot.setHuntingStartTimeOffset(Util.nextInt(0, 5000));
+                    break;
+                    
+                case TYPE_FARM_BOSS:
+                    bot.equipRandomOutfitFromShop();
+                    bot.equipRandomTitle();
+                    bot.equipRandomFlagBag();
+                    bot.startAttackBoss();
+                    bot.setBossAttackOffset(Util.nextInt(0, 3000));
+                    break;
+                    
+                case TYPE_NPC_VISITOR:
+                    bot.equipRandomOutfitFromShop();
+                    bot.equipRandomTitle();
+                    bot.equipRandomFlagBag();
+                    bot.startNpcVisitorMode();
+                    break;
+                    
+                case TYPE_AFK:
+                    bot.equipRandomOutfitFromShop();
+                    bot.equipRandomTitle();
+                    bot.equipRandomFlagBag();
+                    bot.startAfkMode();
+                    // Start auto fusion if bot has pet
+                    if (BotConfig.BOT_AUTO_FUSION && bot.hasPet()) {
+                        bot.startAutoFusion();
+                    }
+                    break;
+                default:
+                    System.err.println("[BotManager] Unknown bot type: " + type);
+            }
+        } catch (Exception e) {
+            System.err.println("[BotManager] Error initializing bot " + bot.name + " of type " + getTypeName(type) + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

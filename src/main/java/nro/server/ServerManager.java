@@ -319,9 +319,8 @@ public class ServerManager {
     }
 
     public void saveAll(boolean updateTimeLogout) {
-        try {
+        try (Connection conn = DBService.gI().getConnectionForAutoSave()) {
             List<Player> list = Client.gI().getPlayers();
-            Connection conn = DBService.gI().getConnectionForAutoSave();
             for (Player player : list) {
                 try {
                     PlayerDAO.updateTimeLogout = updateTimeLogout;

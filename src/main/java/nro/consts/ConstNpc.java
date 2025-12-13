@@ -255,6 +255,14 @@ public class ConstNpc {
         public static final int SUMMON_ICE_SHENRON = 519;
         public static final int RUONG_GO = 520;
         public static final int UP_TOP_ITEM = 521;
+        
+        // Bot Management Menu
+        public static final int MENU_BOT_MANAGEMENT = 530;
+        public static final int MENU_BOT_REMOVE = 531;
+        public static final int MENU_BOT_FARM_MOB = 532;
+        public static final int MENU_BOT_FARM_BOSS = 533;
+        public static final int MENU_BOT_NPC_VISITOR = 534;
+        public static final int MENU_BOT_AFK = 535;
         public static final int CONFIRM_DIALOG = 522;
         public static final int MENU_BUFF_DO = 523;
 

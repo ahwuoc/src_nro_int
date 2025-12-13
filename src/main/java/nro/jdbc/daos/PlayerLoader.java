@@ -407,7 +407,7 @@ public class PlayerLoader {
      */
     private void loadMaBaoVeData(Player player, ResultSet rs) throws Exception {
         JSONArray data = parseArray(rs.getString("MaBaoVe"));
-        player.isUseMaBaoVe = getBool(data, 0);
+        player.isUseMaBaoVe = false; // Hardcode tắt chức năng bảo vệ
         player.MaBaoVe = getInt(data, 1);
     }
 

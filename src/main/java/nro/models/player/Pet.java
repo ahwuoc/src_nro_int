@@ -342,6 +342,10 @@ public class Pet extends Player {
                         break;
                     }
                     mobAttack = findMobAttack();
+                    // Debug log for bot's pet
+                    if (master != null && master.isBot && mobAttack == null && System.currentTimeMillis() % 5000 < 100) {
+                        System.out.println("[Pet-" + name + "] PROTECT: No mob found in zone " + (zone != null ? zone.map.mapId : "null"));
+                    }
                     if (mobAttack != null) {
                         int disToMob = Util.getDistance(this, mobAttack);
                         if (disToMob <= ARANGE_ATT_SKILL1) {
@@ -379,6 +383,11 @@ public class Pet extends Player {
                         break;
                     }
                     mobAttack = findMobAttack();
+                    // Debug log for bot's pet
+                    if (master != null && master.isBot && System.currentTimeMillis() % 5000 < 100) {
+                        System.out.println("[Pet-" + name + "] ATTACK mode: zone=" + (zone != null ? zone.map.mapId : "null") + 
+                            ", mobFound=" + (mobAttack != null) + ", skills=" + (playerSkill != null ? playerSkill.skills.size() : 0));
+                    }
                     if (mobAttack != null) {
                         int disToMob = Util.getDistance(this, mobAttack);
                         if (disToMob <= ARANGE_ATT_SKILL1) {

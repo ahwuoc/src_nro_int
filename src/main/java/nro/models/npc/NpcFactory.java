@@ -1585,7 +1585,7 @@ public class NpcFactory {
                                                         "VIP 2\nMở Shop VIP",
                                                         "VIP 3\n+30% TNSM vĩnh viễn",
                                                         "Đóng");
-                                                        break;
+                                                break;
 
                                             case 4: // tiệm hớt tóc
                                                 this.openShopNoWithGender(player, ConstNpc.SHOP_SANTA_1, 1);
@@ -2183,7 +2183,7 @@ public class NpcFactory {
                                                 createOtherMenu(player, ConstNpc.MENU_CHUYEN_HOA_SKH,
                                                         "Ta sẽ nâng trang bị hủy diệt của người\nlên một tầm cao mới hoàn toàn khác",
                                                         "Nâng cấp\nSKH VIP",
-                                                        "Nâng cấp\n Đồ thần");
+                                                        "Nâng cấp\n Đồ thần", "Che tao da skh");
                                                 return;
                                             case 2:
                                                 CombineServiceNew.gI().openTabCombine(player,
@@ -2237,6 +2237,10 @@ public class NpcFactory {
                                                 CombineServiceNew.gI().openTabCombine(player,
                                                         CombineServiceNew.NANG_CAP_DO_TL);
                                                 break;
+                                            case 2: // nâng cấp đồ hủy diệt
+                                                CombineServiceNew.gI().openTabCombine(player,
+                                                        CombineServiceNew.CRAFT_DA_CUONG_HOA_SKH);
+                                                break;
 
                                         }
                                     } else if (player.iDMark.getIndexMenu() == ConstNpc.MENU_PHA_LE_HOA_TRANG_BI) {
@@ -2283,6 +2287,7 @@ public class NpcFactory {
                                             case CombineServiceNew.NANG_CAP_DO_TL:
                                             case CombineServiceNew.AN_TRANG_BI:
                                             case CombineServiceNew.KHAM_DA_CUONG_HOA:
+                                            case CombineServiceNew.CRAFT_DA_CUONG_HOA_SKH:
 
                                                 CombineServiceNew.gI().startCombine(player, select);
                                                 break;
@@ -6023,11 +6028,15 @@ public class NpcFactory {
                                                     // Kiểm tra lượt trước khi vào
                                                     if (!nro.ahwuocdz.DungeonManage.gI().canPlayerJoinDungeon(player)) {
                                                         // Hết lượt free, kiểm tra cost_item
-                                                        Item cost_item = InventoryService.gI().findItemBagByTemp(player, 1831);
+                                                        Item cost_item = InventoryService.gI().findItemBagByTemp(player,
+                                                                1831);
                                                         if (cost_item != null) {
-                                                            InventoryService.gI().subQuantityItemsBag(player, cost_item, 1);
-                                                            Service.getInstance().sendThongBao(player, "Đã sử dụng " + cost_item.template.name + " để vào Địa Cung");
-                                                            nro.ahwuocdz.DungeonManage.gI().joinMapDiacung(player, true);
+                                                            InventoryService.gI().subQuantityItemsBag(player, cost_item,
+                                                                    1);
+                                                            Service.getInstance().sendThongBao(player, "Đã sử dụng "
+                                                                    + cost_item.template.name + " để vào Địa Cung");
+                                                            nro.ahwuocdz.DungeonManage.gI().joinMapDiacung(player,
+                                                                    true);
                                                         } else {
                                                             Service.getInstance().sendThongBaoOK(player,
                                                                     "Bạn đã hết lượt tham gia Địa Cung hôm nay!\nCần có Vé Địa Cung để tiếp tục tham gia.");
@@ -6616,6 +6625,124 @@ public class NpcFactory {
                                 "[DEBUG CON_MEO] MENU_TASK_DETY detected - indexMenu: " + player.iDMark.getIndexMenu()
                                         + ", select: " + select + ", tempId: " + player.iDMark.getTempId());
                         nro.services.task.TaskDeTy.gI().handleMenuSelect(player, player.iDMark.getTempId(), select);
+                        break;
+                    case ConstNpc.MENU_BOT_MANAGEMENT:
+                        if (player.isAdmin()) {
+                            switch (select) {
+                                case 0: // Farm Mob Bot
+                                    NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_BOT_FARM_MOB, 17997,
+                                            "|7|-----Farm Mob Bot-----\n|2|Số lượng: " + nro.bot.BotManager.gI()
+                                                    .getBotCount(nro.bot.BotManager.TYPE_FARM_MOB),
+                                            "Tạo Bot", "Xóa Bot", "Quay lại");
+                                    break;
+                                case 1: // Farm Boss Bot
+                                    NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_BOT_FARM_BOSS, 17997,
+                                            "|7|-----Farm Boss Bot-----\n|3|Số lượng: " + nro.bot.BotManager.gI()
+                                                    .getBotCount(nro.bot.BotManager.TYPE_FARM_BOSS),
+                                            "Tạo Bot", "Xóa Bot", "Quay lại");
+                                    break;
+                                case 2: // NPC Visitor Bot
+                                    NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_BOT_NPC_VISITOR, 17997,
+                                            "|7|-----NPC Visitor Bot-----\n|4|Số lượng: " + nro.bot.BotManager.gI()
+                                                    .getBotCount(nro.bot.BotManager.TYPE_NPC_VISITOR),
+                                            "Tạo Bot", "Xóa Bot", "Quay lại");
+                                    break;
+                                case 3: // AFK Bot
+                                    NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_BOT_AFK, 17997,
+                                            "|7|-----AFK Bot-----\n|5|Số lượng: "
+                                                    + nro.bot.BotManager.gI().getBotCount(nro.bot.BotManager.TYPE_AFK),
+                                            "Tạo Bot", "Xóa Bot", "Quay lại");
+                                    break;
+                                case 4: // Xóa tất cả
+                                    int totalCount = nro.bot.BotManager.gI().getTotalBotCount();
+                                    nro.bot.BotManager.gI().removeAllBots();
+                                    Service.getInstance().sendThongBao(player, "Đã xóa tất cả " + totalCount + " bot");
+                                    break;
+                                case 5: // Đóng menu
+                                    break;
+                            }
+                        }
+                        break;
+                    case ConstNpc.MENU_BOT_FARM_MOB:
+                        if (player.isAdmin()) {
+                            switch (select) {
+                                case 0: // Tạo Bot
+                                    Input.gI().createFormCreateBotByType(player, nro.bot.BotManager.TYPE_FARM_MOB);
+                                    break;
+                                case 1: // Xóa Bot
+                                    int count = nro.bot.BotManager.gI().getBotCount(nro.bot.BotManager.TYPE_FARM_MOB);
+                                    nro.bot.BotManager.gI().removeBotsByType(nro.bot.BotManager.TYPE_FARM_MOB);
+                                    Service.getInstance().sendThongBao(player, "Đã xóa " + count + " bot Farm Mob");
+                                    break;
+                                case 2: // Quay lại
+                                    NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_BOT_MANAGEMENT, 17997,
+                                            "|7|-----Quản lý Bot-----\n"
+                                                    + nro.bot.BotManager.gI().getBotStatisticsText(),
+                                            "Farm Mob", "Farm Boss", "NPC Visitor", "AFK", "Xóa tất cả", "Đóng");
+                                    break;
+                            }
+                        }
+                        break;
+                    case ConstNpc.MENU_BOT_FARM_BOSS:
+                        if (player.isAdmin()) {
+                            switch (select) {
+                                case 0: // Tạo Bot
+                                    Input.gI().createFormCreateBotByType(player, nro.bot.BotManager.TYPE_FARM_BOSS);
+                                    break;
+                                case 1: // Xóa Bot
+                                    int count = nro.bot.BotManager.gI().getBotCount(nro.bot.BotManager.TYPE_FARM_BOSS);
+                                    nro.bot.BotManager.gI().removeBotsByType(nro.bot.BotManager.TYPE_FARM_BOSS);
+                                    Service.getInstance().sendThongBao(player, "Đã xóa " + count + " bot Farm Boss");
+                                    break;
+                                case 2: // Quay lại
+                                    NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_BOT_MANAGEMENT, 17997,
+                                            "|7|-----Quản lý Bot-----\n"
+                                                    + nro.bot.BotManager.gI().getBotStatisticsText(),
+                                            "Farm Mob", "Farm Boss", "NPC Visitor", "AFK", "Xóa tất cả", "Đóng");
+                                    break;
+                            }
+                        }
+                        break;
+                    case ConstNpc.MENU_BOT_NPC_VISITOR:
+                        if (player.isAdmin()) {
+                            switch (select) {
+                                case 0: // Tạo Bot
+                                    Input.gI().createFormCreateBotByType(player, nro.bot.BotManager.TYPE_NPC_VISITOR);
+                                    break;
+                                case 1: // Xóa Bot
+                                    int count = nro.bot.BotManager.gI()
+                                            .getBotCount(nro.bot.BotManager.TYPE_NPC_VISITOR);
+                                    nro.bot.BotManager.gI().removeBotsByType(nro.bot.BotManager.TYPE_NPC_VISITOR);
+                                    Service.getInstance().sendThongBao(player, "Đã xóa " + count + " bot NPC Visitor");
+                                    break;
+                                case 2: // Quay lại
+                                    NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_BOT_MANAGEMENT, 17997,
+                                            "|7|-----Quản lý Bot-----\n"
+                                                    + nro.bot.BotManager.gI().getBotStatisticsText(),
+                                            "Farm Mob", "Farm Boss", "NPC Visitor", "AFK", "Xóa tất cả", "Đóng");
+                                    break;
+                            }
+                        }
+                        break;
+                    case ConstNpc.MENU_BOT_AFK:
+                        if (player.isAdmin()) {
+                            switch (select) {
+                                case 0: // Tạo Bot
+                                    Input.gI().createFormCreateBotByType(player, nro.bot.BotManager.TYPE_AFK);
+                                    break;
+                                case 1: // Xóa Bot
+                                    int count = nro.bot.BotManager.gI().getBotCount(nro.bot.BotManager.TYPE_AFK);
+                                    nro.bot.BotManager.gI().removeBotsByType(nro.bot.BotManager.TYPE_AFK);
+                                    Service.getInstance().sendThongBao(player, "Đã xóa " + count + " bot AFK");
+                                    break;
+                                case 2: // Quay lại
+                                    NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_BOT_MANAGEMENT, 17997,
+                                            "|7|-----Quản lý Bot-----\n"
+                                                    + nro.bot.BotManager.gI().getBotStatisticsText(),
+                                            "Farm Mob", "Farm Boss", "NPC Visitor", "AFK", "Xóa tất cả", "Đóng");
+                                    break;
+                            }
+                        }
                         break;
                     case ConstNpc.MENU_BOSS_LIST:
                         switch (select) {

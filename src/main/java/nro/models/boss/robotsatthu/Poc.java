@@ -62,7 +62,10 @@ public class Poc extends Boss {
     public void leaveMap() {
         super.leaveMap();
         BossManager.gI().removeBoss(this);
-        BossManager.gI().getBossById(BossFactory.PIC).changeToAttack();
+        Boss pic = BossManager.gI().getBossById(BossFactory.PIC);
+        if (pic != null) {
+            pic.changeToAttack();
+        }
     }
 
 }

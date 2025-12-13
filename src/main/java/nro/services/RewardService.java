@@ -60,7 +60,6 @@ public class RewardService {
         }
     }
 
-    // Kiểm tra có thể drop SKH không
     private static boolean canDropSKH() {
         checkResetSkhDropCount();
         return skhDropCount < MAX_SKH_DROP_PER_HOUR;

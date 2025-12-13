@@ -1968,20 +1968,17 @@ public class UseItem {
     }
 
     private void usePorata(Player pl) {
-        if (pl.pet == null || pl.fusion.typeFusion == 4) {
+        if (pl.pet == null || pl.fusion.typeFusion == ConstPlayer.LUONG_LONG_NHAT_THE) {
             Service.getInstance().sendThongBao(pl, "Không thể thực hiện");
+        } else if (pl.fusion.typeFusion == ConstPlayer.NON_FUSION) {
+            pl.pet.fusion(true);
         } else {
-            if (pl.fusion.typeFusion == ConstPlayer.NON_FUSION) {
-                pl.pet.fusion(true);
-            } else {
-                pl.pet.unFusion();
-            }
+            pl.pet.unFusion();
         }
     }
 
     private void usePorata2(Player pl) {
-        if (pl.pet == null || pl.fusion.typeFusion == 4 || pl.fusion.typeFusion == 6 || pl.fusion.typeFusion == 10
-                || pl.fusion.typeFusion == 12) {
+        if (pl.pet == null || pl.fusion.typeFusion == ConstPlayer.LUONG_LONG_NHAT_THE) {
             Service.getInstance().sendThongBao(pl, "Không thể thực hiện");
         } else if (pl.fusion.typeFusion == ConstPlayer.NON_FUSION) {
             pl.pet.fusion2(true);

@@ -2,6 +2,7 @@ package nro.models.player;
 
 import nro.models.item.Item;
 import nro.models.item.ItemOption;
+import nro.services.func.CombineServiceNew;
 
 /**
  *
@@ -32,9 +33,52 @@ public class SetClothes {
     public boolean godClothes;
     public int ctHaiTac = -1;
 
+    public byte tin_an;
+    public byte nhat_an;
+    public byte nguyet_an;
+
+
+    /**
+     * Áp dụng buff HP từ set Nhật Ấn (5 món +15% HP)
+     */
+    public void applyHpBuff() {
+        if (this.nhat_an >= 5) {
+            this.player.nPoint.hpMax += this.player.nPoint.hpMax * 15 / 100;
+        }
+    }
+    
+    /**
+     * Áp dụng buff Dame từ set Tinh Ấn (5 món +15% Sát Thương)
+     */
+    public void applyDameBuff() {
+        if (this.tin_an >= 5) {
+            this.player.nPoint.dame += this.player.nPoint.dame * 15 / 100;
+        }
+    }
+    
+    /**
+     * Áp dụng buff MP từ set Nguyệt Ấn (5 món +15% KI)
+     */
+    public void applyMpBuff() {
+        if (this.nguyet_an >= 5) {
+            this.player.nPoint.mpMax += this.player.nPoint.mpMax * 15 / 100;
+        }
+    }
+    
+    /**
+     * Áp dụng tất cả buff từ set đồ ấn
+     */
+    public void applyAllBuffs() {
+        applyHpBuff();
+        applyDameBuff();
+        applyMpBuff();
+    }
+    
+
     public void setup() {
         setDefault();
         setupSKT();
+        setupAn();
         this.godClothes = true;
         for (int i = 0; i < 5; i++) {
             Item item = this.player.inventory.itemsBody.get(i);
@@ -65,6 +109,24 @@ public class SetClothes {
             }
         }
     }
+    private void setupAn() {
+    for (int i = 0; i < 5; i++) {
+        Item item = this.player.inventory.itemsBody.get(i);
+        if (!item.isNotNullItem()) break;
+
+        item.itemOptions.stream()
+            .map(io -> io.optionTemplate.id)
+            .filter(id -> id == 34 || id == 35 || id == 36)
+            .findFirst()
+            .ifPresent(id -> {
+                switch (id) {
+                    case 34 -> tin_an++;
+                    case 35 -> nguyet_an++;
+                    case 36 -> nhat_an++;
+                }
+            });
+    }
+}
 
     private void setupSKT() {
         for (int i = 0; i < 5; i++) {

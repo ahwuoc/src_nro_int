@@ -240,17 +240,6 @@ public class GameLoop implements Runnable {
             int playerCount = getActivePlayers().size();
             int mobCount = getActiveMobCount();
             int effectCount = getActiveEffectCount();
-            
-            Log.log(String.format(
-                "Tick Statistics [%d]: Avg=%.2fms, Max=%dms, Min=%dms, Players=%d, Mobs=%d, Effects=%d",
-                tickCount,
-                averageTickDuration,
-                maxTickDuration,
-                minTickDuration,
-                playerCount,
-                mobCount,
-                effectCount
-            ));
         } catch (Exception e) {
             Log.error(GameLoop.class, e, "Error logging tick statistics");
         }

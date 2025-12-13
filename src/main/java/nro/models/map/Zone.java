@@ -104,7 +104,8 @@ public class Zone {
 
     private void updateMob() {
         synchronized (mobs) {
-            // Create a copy to avoid ConcurrentModificationException if mobs are added/removed during update
+            // Create a copy to avoid ConcurrentModificationException if mobs are
+            // added/removed during update
             List<Mob> mobsCopy = new ArrayList<>(mobs);
             for (Mob mob : mobsCopy) {
                 try {
@@ -146,7 +147,8 @@ public class Zone {
 
     private void updatePlayer() {
         synchronized (notBosses) {
-            // Create a copy to avoid ConcurrentModificationException if players are added/removed during update
+            // Create a copy to avoid ConcurrentModificationException if players are
+            // added/removed during update
             List<Player> playersCopy = new ArrayList<>(notBosses);
             for (Player pl : playersCopy) {
                 try {
@@ -171,7 +173,8 @@ public class Zone {
 
     private void updateItem() {
         synchronized (items) {
-            // Create a copy to avoid ConcurrentModificationException if items are added/removed during update
+            // Create a copy to avoid ConcurrentModificationException if items are
+            // added/removed during update
             List<ItemMap> itemsCopy = new ArrayList<>(items);
             for (ItemMap item : itemsCopy) {
                 try {
@@ -372,16 +375,15 @@ public class Zone {
     }
 
     public void pickItem(Player player, int itemMapId) {
-        System.out.println("[Zone.pickItem] Player: " + player.name + ", isBot: " + player.isBot + ", itemMapId: " + itemMapId);
-        
+        System.out.println(
+                "[Zone.pickItem] Player: " + player.name + ", isBot: " + player.isBot + ", itemMapId: " + itemMapId);
+
         ItemMap itemMap = getItemMapByItemMapId(itemMapId);
         if (itemMap == null) {
             System.out.println("[Zone.pickItem] ItemMap is null!");
             Service.getInstance().sendThongBao(player, "Không thể thực hiện");
             return;
         }
-
-        // Không cho nhặt nếu là vệ tinh
         if (itemMap instanceof Satellite)
             return;
 
@@ -390,9 +392,8 @@ public class Zone {
                 Service.getInstance().sendThongBao(player, "Không thể nhặt vật phẩm của người khác");
                 return;
             }
-
-            // Kiểm tra người chơi có quyền nhặt (Bot được phép nhặt mọi item)
-            if (!player.isBot && itemMap.playerId != player.id && itemMap.playerId != -1 && itemMap.itemTemplate.id != 78) {
+            if (!player.isBot && itemMap.playerId != player.id && itemMap.playerId != -1
+                    && itemMap.itemTemplate.id != 78) {
                 Service.getInstance().sendThongBao(player, "Không thể nhặt vật phẩm của người khác");
                 return;
             }
@@ -406,37 +407,25 @@ public class Zone {
                 }
                 InventoryService.gI().subQuantityItemsBag(player, requiredItem, 1);
             }
-
-            // Nếu là bóng rồng Namek
             if (itemMap instanceof NamekBall ball) {
                 NamekBallWar.gI().pickBall(player, ball);
                 return;
             }
 
-            // Tạo item từ itemMap
             Item item = ItemService.gI().createItemFromItemMap(itemMap);
             int maxQuantity = ItemService.gI().isItemNoLimitQuantity(item.template.id) ? 99999 : 0;
-
             boolean picked = InventoryService.gI().addItemBag(player, item, maxQuantity);
-            System.out.println("[Zone.pickItem] addItemBag result: " + picked);
-            
+
             if (!picked) {
-                System.out.println("[Zone.pickItem] Failed to add item to bag!");
                 if (!ItemMapService.gI().isBlackBall(item.template.id)) {
                     Service.getInstance().sendThongBao(player, "Hành trang không còn chỗ trống");
                 }
                 return;
             }
-
-            // Nếu nhặt thành công
             if (itemMap.itemTemplate.id != 74) {
                 itemMap.isPickedUp = true;
             }
-
-            System.out.println("[Zone.pickItem] Calling sendPickupMessage, player.isBot=" + player.isBot);
             sendPickupMessage(player, itemMap, item, itemMapId);
-
-            // Xoá item khỏi bản đồ nếu không nằm trong vùng đặc biệt
             int mapID = this.map.mapId;
             boolean isSpecialItem = (mapID >= 21 && mapID <= 23 && itemMap.itemTemplate.id == 74)
                     || (mapID >= 42 && mapID <= 44 && itemMap.itemTemplate.id == 78);
@@ -496,30 +485,11 @@ public class Zone {
             }
 
             msg.writer().writeShort(item.quantity);
-            
-            // Nếu là bot, gửi message cho tất cả người chơi trong zone
-            if (player.isBot) {
-                // Gửi thủ công cho từng player (bot không có session)
-                msg.transformData();
-                List<Player> players = this.getPlayers();
-                int sentCount = 0;
-                synchronized (players) {
-                    for (Player pl : players) {
-                        if (pl != null && !pl.isBot) {
-                            pl.sendMessage(msg);
-                            sentCount++;
-                        }
-                    }
-                }
-                msg.cleanup();
-                System.out.println("[Zone] Bot pickup message sent to " + sentCount + " players");
-                // Gửi thông báo item biến mất cho các player khác
-                Service.getInstance().sendToAntherMePickItem(player, itemMapId);
-            } else {
+            if (!player.isBot) {
                 player.sendMessage(msg);
-                msg.cleanup();
-                Service.getInstance().sendToAntherMePickItem(player, itemMapId);
             }
+            msg.cleanup();
+            Service.getInstance().sendToAntherMePickItem(player, itemMapId);
         } catch (Exception e) {
             Log.error(Zone.class, e);
         }
@@ -667,7 +637,8 @@ public class Zone {
 
         Service.getInstance().sendFlagPlayerToMe(plReceive, plInfo);
         // Send title for normal players (from item slot 12)
-        if (plInfo.isPl() && !plInfo.isBot && plInfo.inventory != null && plInfo.inventory.itemsBody != null && plInfo.inventory.itemsBody.size() > 12 && plInfo.inventory.itemsBody.get(12).isNotNullItem()) {
+        if (plInfo.isPl() && !plInfo.isBot && plInfo.inventory != null && plInfo.inventory.itemsBody != null
+                && plInfo.inventory.itemsBody.size() > 12 && plInfo.inventory.itemsBody.get(12).isNotNullItem()) {
             Service.getInstance().sendTitleRv1(plInfo, plReceive,
                     (short) (plInfo.inventory.itemsBody.get(12).template.part));
         }

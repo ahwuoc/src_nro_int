@@ -439,16 +439,20 @@ public class NPoint {
     }
 
     private void setDameTrainArmor() {
-        if (!this.player.isPet && !this.player.isBoss && !this.player.isMiniPet) {
+        if (!this.player.isPet && !this.player.isBoss && !this.player.isMiniPet && !this.player.isBot) {
             try {
+                if (this.player.inventory == null || this.player.inventory.itemsBody == null 
+                        || this.player.inventory.itemsBody.size() <= 6) {
+                    return;
+                }
                 Item gtl = this.player.inventory.itemsBody.get(6);
-                if (gtl.isNotNullItem()) {
+                if (gtl != null && gtl.isNotNullItem()) {
                     this.wearingTrainArmor = true;
                     this.wornTrainArmor = true;
                     this.player.inventory.trainArmor = gtl;
                     this.tlSubSD += ItemService.gI().getPercentTrainArmor(gtl);
                 } else {
-                    if (this.wornTrainArmor) {
+                    if (this.wornTrainArmor && this.player.inventory.trainArmor != null) {
                         this.wearingTrainArmor = false;
                         for (ItemOption io : this.player.inventory.trainArmor.itemOptions) {
                             if (io.optionTemplate.id == 9 && io.param > 0) {
@@ -460,7 +464,7 @@ public class NPoint {
                     }
                 }
             } catch (Exception e) {
-                Log.error("Lỗi get giáp tập luyện " + this.player.name);
+                // Bỏ qua lỗi cho bot
             }
         }
     }
@@ -613,6 +617,9 @@ public class NPoint {
             this.hpMax += calPercent(this.hpMax, player.ChiSoHP_5);
         }
 
+     
+        this.player.setClothes.applyHpBuff();
+        
         // set nappa
         if (this.player.setClothes.nappa == 5) {
             this.hpMax += calPercent(this.hpMax, 100);
@@ -790,6 +797,8 @@ public class NPoint {
         if (player.getBuff() == Buff.BUFF_KI) {
             mpMax += calPercent(mpMax, 20);
         }
+        // Set Nguyệt Ấn (+15% KI)
+        this.player.setClothes.applyMpBuff();
     }
 
     private void setMp() {
@@ -885,6 +894,8 @@ public class NPoint {
         if (player.getBuff() == Buff.BUFF_ATK) {
             dame += calPercent(dame, 20);
         }
+        // Set Tinh Ấn (+15% Sát Thương)
+        this.player.setClothes.applyDameBuff();
     }
 
     private void setDef() {

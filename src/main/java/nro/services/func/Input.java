@@ -42,6 +42,8 @@ public class Input {
     public static final int SEND_ITEM_OP = 512;
     public static final int TANG_SKH = 513;
     public static final int DOI_HONG_NGOC = 514;
+    public static final int CREATE_BOT = 515;
+    public static final int CREATE_BOT_BY_TYPE = 516;
     public static final byte NUMERIC = 0;
     public static final byte ANY = 1;
     public static final byte PASSWORD = 2;
@@ -371,6 +373,79 @@ public class Input {
                                 "Bạn nhận được " + item.template.name + " Số lượng: " + quantity);
 
                     }
+                    break;
+                case CREATE_BOT:
+                    if (player.isAdmin()) {
+                        try {
+                            int botType = Integer.parseInt(text[0]);
+                            int botQuantity = Integer.parseInt(text[1]);
+                            
+                            // Validate bot type (1-5)
+                            if (botType < 1 || botType > 5) {
+                                Service.getInstance().sendThongBao(player, "Loại bot không hợp lệ (1-5)");
+                                return;
+                            }
+                            
+                            // Validate quantity (1-100)
+                            if (botQuantity < 1 || botQuantity > 100) {
+                                Service.getInstance().sendThongBao(player, "Số lượng không hợp lệ (1-100)");
+                                return;
+                            }
+                            
+                            // Create bots
+                            nro.bot.BotManager.gI().createBots(botType, botQuantity);
+                            
+                            // Get bot type name for confirmation message
+                            String typeName = switch (botType) {
+                                case 1 -> "Farm Mob";
+                                case 2 -> "Farm Boss";
+                                case 3 -> "Talk NPC";
+                                case 4 -> "Shop NPC";
+                                case 5 -> "AFK";
+                                default -> "Unknown";
+                            };
+                            
+                            Service.getInstance().sendThongBao(player, 
+                                "Đã tạo " + botQuantity + " bot loại " + typeName);
+                        } catch (NumberFormatException e) {
+                            Service.getInstance().sendThongBao(player, "Vui lòng nhập số");
+                        }
+                    }
+                    break;
+                case CREATE_BOT_BY_TYPE:
+                    if (player.isAdmin()) {
+                        try {
+                            int botQuantity = Integer.parseInt(text[0]);
+                            int botType = (Integer) PLAYER_ID_OBJECT.get((int) player.id);
+                            
+                            // Validate quantity (1-100)
+                            if (botQuantity < 1 || botQuantity > 1000) {
+                                Service.getInstance().sendThongBao(player, "Số lượng không hợp lệ (1-1000)");
+                                return;
+                            }
+                            
+                            // Create bots
+                            nro.bot.BotManager.gI().createBots(botType, botQuantity);
+                            
+                            // Get bot type name for confirmation message
+                            String typeName = switch (botType) {
+                                case 1 -> "Farm Mob";
+                                case 2 -> "Farm Boss";
+                                case 3 -> "Talk NPC";
+                                case 4 -> "Shop NPC";
+                                case 5 -> "AFK";
+                                default -> "Unknown";
+                            };
+                            
+                            Service.getInstance().sendThongBao(player, 
+                                "Đã tạo " + botQuantity + " bot loại " + typeName);
+                        } catch (NumberFormatException e) {
+                            Service.getInstance().sendThongBao(player, "Vui lòng nhập số");
+                        } catch (Exception e) {
+                            Service.getInstance().sendThongBao(player, "Lỗi tạo bot");
+                        }
+                    }
+                    break;
             }
         } catch (Exception e) {
         }
@@ -471,6 +546,25 @@ public class Input {
     public void createFormAddItem(Player pl) {
         createForm(pl, ADD_ITEM, "Add Item", new SubInput("ID VẬT PHẨM", NUMERIC),
                 new SubInput("SỐ LƯỢNG", NUMERIC));
+    }
+
+    public void createFormCreateBot(Player pl) {
+        createForm(pl, CREATE_BOT, "Tạo Bot",
+                new SubInput("Loại Bot (1-5)", NUMERIC),
+                new SubInput("Số lượng (1-100)", NUMERIC));
+    }
+
+    public void createFormCreateBotByType(Player pl, int botType) {
+        PLAYER_ID_OBJECT.put((int) pl.id, botType);
+        String typeName = switch (botType) {
+            case 1 -> "Farm Mob";
+            case 2 -> "Farm Boss";
+            case 3 -> "NPC Visitor";
+            case 4 -> "AFK";
+            default -> "Unknown";
+        };
+        createForm(pl, CREATE_BOT_BY_TYPE, "Tạo Bot " + typeName,
+                new SubInput("Số lượng (1-1000)", NUMERIC));
     }
 
     public class SubInput {

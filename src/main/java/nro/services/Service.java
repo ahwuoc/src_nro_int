@@ -509,7 +509,7 @@ public class Service {
             List<Player> players = player.zone.getPlayers();
             synchronized (players) {
                 for (Player pl : players) {
-                    if (pl != null && !pl.equals(player)) {
+                    if (pl != null && !pl.equals(player) && !pl.isBot) {
                         pl.sendMessage(msg);
                     }
                 }
@@ -741,28 +741,6 @@ public class Service {
                 }
 
             }
-            // Bot commands: bot_create [type] [quantity]
-            // Types: 1=farm_mob, 2=farm_boss, 3=talk_npc, 4=shop_npc
-            if (text.startsWith("bot_create ")) {
-                try {
-                    String[] parts = text.replace("bot_create ", "").split(" ");
-                    int type = Integer.parseInt(parts[0]);
-                    int quantity = parts.length > 1 ? Integer.parseInt(parts[1]) : 1;
-                    nro.bot.BotManager.gI().createBots(type, quantity);
-                    sendThongBao(player, "Đã tạo " + quantity + " bot loại " + type);
-                } catch (Exception e) {
-                    sendThongBao(player, "Lệnh: bot_create [type] [số lượng]\nType: 1=farm, 2=boss, 3=npc, 4=shop");
-                }
-            }
-            if (text.startsWith("bot_remove ")) {
-                try {
-                    int type = Integer.parseInt(text.replace("bot_remove ", ""));
-                    nro.bot.BotManager.gI().removeBotsByType(type);
-                    sendThongBao(player, "Đã xóa bot loại " + type);
-                } catch (Exception e) {
-                    sendThongBao(player, "Lệnh: bot_remove [type]");
-                }
-            }
             if (text.equals("bot_clear")) {
                 nro.bot.BotManager.gI().removeAllBots();
                 sendThongBao(player, "Đã xóa tất cả bot");
@@ -969,8 +947,15 @@ public class Service {
                         "|7|-----ahwuocdz-----\n"
                                 + "|1|Số người chơi đang online: " + Client.gI().getPlayers().size() + "\n"
                                 + "|8|Current thread server: " + Thread.activeCount() + "\n"
-                                + "|6|Time start server: " + ServerManager.timeStart,
+                                + "|6|Time start server: " + ServerManager.timeStart + "\n"
+                                + nro.bot.BotManager.gI().getBotStatisticsText(),
                         "Ngọc rồng", "Đệ tử", "Bảo trì", "Tìm kiếm\nngười chơi", "Đóng");
+                return;
+            }
+            if(text.equals("bot")){
+                     NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_BOT_MANAGEMENT, 17997,
+                                        "|7|-----Quản lý Bot-----\n" + nro.bot.BotManager.gI().getBotStatisticsText(),
+                                        "Farm Mob", "Farm Boss", "NPC Visitor", "AFK", "Xóa tất cả", "Đóng");
                 return;
             }
             if (text.equals("quanct")) {
@@ -1781,7 +1766,6 @@ public class Service {
             msg = new Message(-19);
             msg.writer().writeShort(itemMapId);
             msg.writer().writeInt((int) player.id);
-            // sendMessAllPlayerIgnoreMe(player, msg);
             sendMessAnotherNotMeInMap(player, msg);
             msg.cleanup();
         } catch (Exception e) {

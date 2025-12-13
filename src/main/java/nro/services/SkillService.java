@@ -173,7 +173,8 @@ public class SkillService {
                 if (player.mobMe != null) {
                     player.mobMe.attack(plTarget, mobTarget);
                 }
-                if (player.id >= 0) {
+                if (player.id >= 0 && player.playerTask != null && player.playerTask.achivements != null 
+                    && player.playerTask.achivements.size() > ConstAchive.NOI_CONG_CAO_CUONG) {
                     player.playerTask.achivements.get(ConstAchive.NOI_CONG_CAO_CUONG).count++;
                 }
                 affterUseSkill(player, player.playerSkill.skillSelect.template.id);
@@ -835,6 +836,10 @@ public class SkillService {
 
     private boolean canAttackPlayer(Player pl1, Player pl2) {
         if (pl2 != null && !pl1.isDie() && !pl2.isDie()) {
+            // Cho phép tấn công boss
+            if (pl2.isBoss) {
+                return true;
+            }
             if (pl1.typePk > 0 || pl2.typePk > 0) {
                 return true;
             }

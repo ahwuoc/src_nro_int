@@ -170,6 +170,8 @@ public class CombineServiceNew {
     private static final int RATIO_BONG_TAI = 15;
     private static final int RATIO_NANG_CAP = 22;
 
+    public static final int CRAFT_DA_CUONG_HOA_SKH = 32323222;
+
     private final Npc baHatMit;
 
     private final Npc obito;
@@ -237,10 +239,41 @@ public class CombineServiceNew {
             }
         }
         switch (player.combineNew.typeCombine) {
+            case CRAFT_DA_CUONG_HOA_SKH:
+                if (InventoryService.gI().getCountEmptyBag(player) > 0) {
+                    if (player.combineNew.itemsCombine.size() == 2) {
+                        Item itemDaNguSac = null;
+                        Item itemThanLinh = null;
+                        for (Item item : player.combineNew.itemsCombine) {
+                            if (item != null && item.isNotNullItem()) {
+                                if (item.template.id == 674) { // Đá ngũ sắc
+                                    itemDaNguSac = item;
+                                } else if (isDoThanLinh(item.template.id)) {
+                                    itemThanLinh = item;
+                                }
+                            }
+                        }
+                        if (itemDaNguSac != null && itemThanLinh != null) {
+                            String npcSay = "|2|Con có muốn chế tạo Đá nâng cấp SKH?\n"
+                                    + "|1|Kết quả: 1 " + ItemService.gI().getTemplate((short) 1314).name + "\n"
+                                    + "|7|Cần 1 " + itemDaNguSac.template.name + "\n"
+                                    + "|7|Cần 1 " + itemThanLinh.template.name;
+                            this.baHatMit.createOtherMenu(player, ConstNpc.MENU_START_COMBINE, npcSay, "Làm phép",
+                                    "Từ chối");
+                        } else {
+                            this.baHatMit.createOtherMenu(player, ConstNpc.IGNORE_MENU,
+                                    "Cần 1 Đá ngũ sắc và 1 món đồ Thần Linh", "Đóng");
+                        }
+                    } else {
+                        this.baHatMit.createOtherMenu(player, ConstNpc.IGNORE_MENU,
+                                "Cần 1 Đá ngũ sắc và 1 món đồ Thần Linh", "Đóng");
+                    }
+                } else {
+                    this.baHatMit.createOtherMenu(player, ConstNpc.IGNORE_MENU, "Hành trang cần ít nhất 1 chỗ trống",
+                            "Đóng");
+                }
+                break;
             case KHAM_DA_CUONG_HOA:
-                System.out.println("[DEBUG] showInfoCombine - KHAM_DA_CUONG_HOA - Player: " + player.name);
-                System.out.println("[DEBUG] Số lượng item trong combine: " + player.combineNew.itemsCombine.size());
-
                 if (player.combineNew.itemsCombine.size() == 2) {
                     long trangBiCount = player.combineNew.itemsCombine.stream()
                             .filter(item -> item.isNotNullItem() && item.template.type < 5).count();
@@ -1483,18 +1516,20 @@ public class CombineServiceNew {
             // }
             // break;
             case DAP_SET_KICH_HOAT_CAO_CAP: {
-                if (player.combineNew.itemsCombine.size() == SO_LUONG_DO_HUY_DIET_CAN) {
+                if (player.combineNew.itemsCombine.size() == SO_LUONG_DO_HUY_DIET_CAN + 1) { // 2 đồ hủy diệt + 1 đá SKH
                     List<Item> items = player.combineNew.itemsCombine;
-                    boolean allAreDestroyClothes = items.stream().allMatch(it -> isDestroyClothes(it.template.id));
+                    List<Item> destroyItems = items.stream().filter(it -> isDestroyClothes(it.template.id)).toList();
+                    Item daSKH = items.stream().filter(it -> it.template.id == 1314).findFirst().orElse(null);
 
-                    if (allAreDestroyClothes) {
-                        String npcSay = items.stream()
+                    if (destroyItems.size() == SO_LUONG_DO_HUY_DIET_CAN && daSKH != null && daSKH.quantity >= 3) {
+                        String npcSay = destroyItems.stream()
                                 .map(it -> "|1|" + it.template.name)
                                 .collect(Collectors.joining("\n"));
                         npcSay += "\nNgươi có muốn chuyển hóa thành\n";
-                        npcSay += "|7|" + getTypeTrangBi(items.get(0).template.type)
-                                + " cấp bậc ngẫu nhiên (set kích hoạt ngẫu nhiên)\n|2|Cần "
-                                + Util.numberToMoney(COST_DAP_DO_KICH_HOAT) + " vàng";
+                        npcSay += "|7|" + getTypeTrangBi(destroyItems.get(0).template.type)
+                                + " cấp bậc ngẫu nhiên (set kích hoạt ngẫu nhiên)\n"
+                                + "|7|Cần 3 " + daSKH.template.name + "\n"
+                                + "|2|Cần " + Util.numberToMoney(COST_DAP_DO_KICH_HOAT) + " vàng";
 
                         if (player.inventory.gold >= COST_DAP_DO_KICH_HOAT) {
                             this.baHatMit.createOtherMenu(player, ConstNpc.MENU_START_COMBINE, npcSay,
@@ -1506,11 +1541,11 @@ public class CombineServiceNew {
                         }
                     } else {
                         this.baHatMit.createOtherMenu(player, ConstNpc.IGNORE_MENU,
-                                "Cần đủ " + SO_LUONG_DO_HUY_DIET_CAN + " món đồ hủy diệt để chuyển hóa!", "Đóng");
+                                "Cần " + SO_LUONG_DO_HUY_DIET_CAN + " món đồ hủy diệt + 3 Đá nâng cấp SKH!", "Đóng");
                     }
                 } else {
                     this.baHatMit.createOtherMenu(player, ConstNpc.IGNORE_MENU,
-                            "Cần đúng " + SO_LUONG_DO_HUY_DIET_CAN + " món đồ hủy diệt để chuyển hóa!", "Đóng");
+                            "Cần " + SO_LUONG_DO_HUY_DIET_CAN + " món đồ hủy diệt + 3 Đá nâng cấp SKH!", "Đóng");
                 }
             }
                 break;
@@ -1687,6 +1722,9 @@ public class CombineServiceNew {
                 case NHAP_NGOC_RONG:
                     nhapNgocRong(player);
                     break;
+                case CRAFT_DA_CUONG_HOA_SKH:
+                    craftDaCuongHoaSKH(player);
+                    break;
                 case NANG_CAP_VAT_PHAM:
                     nangCapVatPham(player);
                     break;
@@ -1744,7 +1782,6 @@ public class CombineServiceNew {
                 case PHAN_RA_SACH:
                     phanRaSach(player);
                     break;
-                // END _ SÁCH TUYỆT KỸ //
             }
             player.iDMark.setIndexMenu(ConstNpc.IGNORE_MENU);
             player.combineNew.clearParamCombine();
@@ -2548,13 +2585,14 @@ public class CombineServiceNew {
     }
 
     private void dapDoKichHoatCaoCap(Player player) {
-        if (player.combineNew.itemsCombine.size() == SO_LUONG_DO_HUY_DIET_CAN) {
+        if (player.combineNew.itemsCombine.size() == SO_LUONG_DO_HUY_DIET_CAN + 1) { // 2 đồ hủy diệt + 1 đá SKH
             List<Item> items = player.combineNew.itemsCombine;
 
-            // Kiểm tra tất cả item đều là đồ hủy diệt
-            boolean allAreDestroyClothes = items.stream().allMatch(it -> isDestroyClothes(it.template.id));
+            // Tách đồ hủy diệt và đá SKH
+            List<Item> destroyItems = items.stream().filter(it -> isDestroyClothes(it.template.id)).toList();
+            Item daSKH = items.stream().filter(it -> it.template.id == 1314).findFirst().orElse(null);
 
-            if (allAreDestroyClothes) {
+            if (destroyItems.size() == SO_LUONG_DO_HUY_DIET_CAN && daSKH != null && daSKH.quantity >= 3) {
                 if (InventoryService.gI().getCountEmptyBag(player) > 0
                         && player.inventory.gold >= COST_DAP_DO_KICH_HOAT) {
 
@@ -2577,7 +2615,7 @@ public class CombineServiceNew {
                     sendEffectSuccessCombine(player);
 
                     // Lấy type từ item đầu tiên để tạo item cùng loại
-                    Item firstItem = items.get(0);
+                    Item firstItem = destroyItems.get(0);
                     int gender = firstItem.template.gender;
                     if (gender == 3)
                         gender = player.gender;
@@ -2591,10 +2629,12 @@ public class CombineServiceNew {
 
                     InventoryService.gI().addItemBag(player, item, 0);
 
-                    // Xóa tất cả item nguyên liệu
-                    for (Item it : items) {
+                    // Xóa đồ hủy diệt
+                    for (Item it : destroyItems) {
                         InventoryService.gI().subQuantityItemsBag(player, it, 1);
                     }
+                    // Trừ 3 đá SKH
+                    InventoryService.gI().subQuantityItemsBag(player, daSKH, 3);
 
                     InventoryService.gI().sendItemBags(player);
                     Service.getInstance().sendMoney(player);
@@ -2606,7 +2646,7 @@ public class CombineServiceNew {
                 }
             } else {
                 Service.getInstance().sendThongBao(player,
-                        "Cần đủ " + SO_LUONG_DO_HUY_DIET_CAN + " món đồ hủy diệt để chuyển hóa!");
+                        "Cần " + SO_LUONG_DO_HUY_DIET_CAN + " món đồ hủy diệt + 3 Đá nâng cấp SKH!");
             }
         }
     }
@@ -3008,6 +3048,52 @@ public class CombineServiceNew {
                 reOpenItemCombine(player);
             }
         }
+    }
+
+    private void craftDaCuongHoaSKH(Player player) {
+        List<Item> items = player.combineNew.itemsCombine;
+        if (items.size() != 2) {
+            Service.getInstance().sendThongBao(player, "Cần 1 Đá ngũ sắc và 1 món đồ Thần Linh!");
+            return;
+        }
+
+        Item itemDaNguSac = null;
+        Item itemThanLinh = null;
+
+        for (Item item : items) {
+            if (item != null && item.isNotNullItem()) {
+                if (item.template.id == 674) { // Đá ngũ sắc
+                    itemDaNguSac = item;
+                } else if (isDoThanLinh(item.template.id)) {
+                    itemThanLinh = item;
+                }
+            }
+        }
+
+        if (itemDaNguSac == null || itemThanLinh == null) {
+            Service.getInstance().sendThongBao(player, "Cần 1 Đá ngũ sắc và 1 món đồ Thần Linh!");
+            return;
+        }
+
+        // Trừ nguyên liệu
+        InventoryService.gI().subQuantityItemsBag(player, itemDaNguSac, 1);
+        InventoryService.gI().subQuantityItemsBag(player, itemThanLinh, 1);
+
+        // Tạo Đá nâng cấp SKH (ID 1314)
+        Item daNangCapSKH = ItemService.gI().createNewItem((short) 1314, 1);
+        InventoryService.gI().addItemBag(player, daNangCapSKH, 0);
+        InventoryService.gI().sendItemBags(player);
+
+        Service.getInstance().sendThongBao(player, "Chế tạo thành công 1 " + daNangCapSKH.template.name);
+        this.baHatMit.createOtherMenu(player, ConstNpc.IGNORE_MENU,
+                "|1|Chế tạo thành công!\n|2|Bạn nhận được 1 " + daNangCapSKH.template.name, "Đóng");
+    }
+
+    /**
+     * Kiểm tra item có phải đồ Thần Linh không (ID 555-567)
+     */
+    private boolean isDoThanLinh(int itemId) {
+        return itemId >= 555 && itemId <= 567;
     }
 
     private void nhapNgocRong(Player player) {
@@ -3557,6 +3643,14 @@ public class CombineServiceNew {
                 return 35;
             case 6:
                 return 50;
+            case 7:
+                return 70;
+            case 8:
+                return 80;
+            case 9:
+                return 90;
+             case 10:
+                return 100;
         }
         return 0;
     }
@@ -4317,6 +4411,8 @@ public class CombineServiceNew {
     // tab combine
     private String getTextTopTabCombine(int type) {
         switch (type) {
+            case CRAFT_DA_CUONG_HOA_SKH:
+                return "Ta sẽ phù phép\nchế tạo Đá nâng cấp SKH\ncho ngươi";
             case AN_TRANG_BI:
                 return "Ta sẽ phù phép\ncho trang bị của ngươi\ntrở thành trang bị Ấn";
             case EP_SAO_TRANG_BI:
@@ -4386,6 +4482,8 @@ public class CombineServiceNew {
 
     private String getTextInfoTabCombine(int type) {
         switch (type) {
+            case CRAFT_DA_CUONG_HOA_SKH:
+                return "Vào hành trang\nChọn 1 Đá ngũ sắc\n+ 1 món đồ Thần Linh\n(Áo, Quần, Găng, Giày, Nhẫn)\nSau đó chọn 'Làm phép'";
             case AN_TRANG_BI:
                 return "Vào hành trang\nChọn 1 Trang bị(Áo, Quần ,Giày ,Găng ,Rada) và 5 Đá Ngũ Sắc\nSau đó chọn 'Làm phép'\n--------\nTinh ấn (5 món +15%SD)\n Nhật ấn (5 món +15%HP)\n Nguyệt ấn (5 món +15%KI)";
 
@@ -4430,7 +4528,7 @@ public class CombineServiceNew {
             case DOI_HOP_QUA_HALLOWEEN:
                 return "Số lượng cần đổi quà bao gồm\n999 bí kiếp 99 bí ngô 99 súp bí hắc ám 10 Hamburger sâu và 30 kẹo 1 mắt. \nSau đó chọn 'Đập'";
             case DAP_SET_KICH_HOAT_CAO_CAP:
-                return "Vào hành trang\nChọn 2 món đồ hủy diệt khác nhau\n(Áo, quần, găng, giày hoặc nhẫn)\nSau đó chọn 'Đập'";
+                return "Vào hành trang\nChọn 2 món đồ hủy diệt\n(Áo, quần, găng, giày hoặc nhẫn)\n+ 3 Đá nâng cấp SKH\nSau đó chọn 'Đập'";
             case GIA_HAN_CAI_TRANG:
                 return "Vào hành trang \n Chọn cải trang có hạn sử dụng \n Chọn thẻ gia hạn \n Sau đó chọn gia hạn";
             case NANG_CAP_DO_THIEN_SU:
@@ -4475,4 +4573,7 @@ public class CombineServiceNew {
         }
     }
 
+    /**
+     * Kiểm tra item có phải đồ Thần Linh không (ID 555-567)
+     */
 }

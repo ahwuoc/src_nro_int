@@ -157,7 +157,7 @@ public class LoginController {
                         session.ruby = ruby;
                         session.diemTichNap = diemTichNap;
                         session.server = server;
-                        session.isUseMaBaoVe = isUseMaBaoVe;
+                        session.isUseMaBaoVe = 0;
                         session.MaBaoVe = MaBaoVe;
                         session.tongnap = TongNap;
                         session.vndBar = VND;
